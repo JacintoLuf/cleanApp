@@ -1,19 +1,28 @@
 package com.example.houseclean
 
+import android.app.ProgressDialog
 import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.text.TextUtils
+import android.util.Patterns
 import android.widget.*
+import androidx.appcompat.app.AppCompatDelegate
+import androidx.core.view.isVisible
+import com.example.houseclean.databinding.ActivityLoginBinding
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
-import com.google.firebase.ktx.Firebase
-import java.lang.NullPointerException
+import com.google.firebase.database.FirebaseDatabase
+
+//import kotlinx.android.synthetic.main.activity_login.*
 
 class LoginActivity : AppCompatActivity() {
-
+    private lateinit var binding: ActivityLoginBinding
+    private lateinit var firebaseAuth: FirebaseAuth
+    private lateinit var database: FirebaseDatabase
+    private lateinit var progressDialog: ProgressDialog
     var isLogged: Boolean = false
     var rememberLogin: Boolean = false
     var email: String = ""
@@ -22,67 +31,111 @@ class LoginActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_login)
+        binding = ActivityLoginBinding.inflate(layoutInflater)
+        setContentView(binding.root)
+
+        supportActionBar?.hide()
+        AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO)
+
+        binding.tilUsername.isVisible = false
+
+        progressDialog = ProgressDialog(this)
+        progressDialog.setTitle("Loading")
+        progressDialog.setMessage("Logging In...")
+        progressDialog.setCanceledOnTouchOutside(false)
 
         loginPreferences()
 
-        val loginTxt = findViewById<TextView>(R.id.logintext)
-        val registerTxt = findViewById<TextView>(R.id.registerText)
-        val etMail = findViewById<EditText>(R.id.etEmail)
-        val etPass = findViewById<EditText>(R.id.etPassword)
-        val rememberCheckBox = findViewById<CheckBox>(R.id.rememberCheckBox)
-        val loginBtn = findViewById<Button>(R.id.loginBtn)
-
-        rememberCheckBox.isChecked = rememberLogin
+        binding.rememberCheckBox.isChecked = rememberLogin
         if(rememberLogin) {
-            etMail.setText(email)
-            etPass.setText(password)
+            binding.etEmail.setText(email)
+            binding.etPassword.setText(password)
         }
-        if (isLogged) login(etMail.text.toString(), etPass.text.toString(), rememberCheckBox.isChecked)
 
-        loginBtn.setOnClickListener {
+        firebaseAuth = FirebaseAuth.getInstance()
+        checkUser()
+
+        binding.loginBtn.setOnClickListener {
             when {
-                TextUtils.isEmpty(etMail.text.toString().trim{ it <= ' '}) -> {
+                TextUtils.isEmpty(binding.etEmail.text.toString().trim()) -> {
                     Toast.makeText(
                         this@LoginActivity,
                         "Please enter email!",
                         Toast.LENGTH_SHORT
                     ).show()
                 }
-                TextUtils.isEmpty(etPass.text.toString().trim{ it <= ' '}) -> {
+                !Patterns.EMAIL_ADDRESS.matcher(binding.etEmail.text.toString().trim()).matches() -> {
+                    Toast.makeText(
+                        this@LoginActivity,
+                        "Invalid email format!",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                }
+                TextUtils.isEmpty(binding.etPassword.text.toString()) -> {
                     Toast.makeText(
                         this@LoginActivity,
                         "Please enter password!",
                         Toast.LENGTH_SHORT
                     ).show()
                 }
+                binding.etPassword.text.toString().length < 6 -> {
+                    Toast.makeText(
+                        this@LoginActivity,
+                        "Password must contain at least 6 characters!",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                }
+                login -> {
+                    login(binding.etEmail.text.toString(), binding.etPassword.text.toString(), binding.rememberCheckBox.isChecked)
+                }
+                TextUtils.isEmpty(binding.etName.text.toString().trim()) -> {
+                    Toast.makeText(
+                        this@LoginActivity,
+                        "Please enter username!",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                }
                 !login -> {
-                    val mail: String = etMail.text.toString().trim{ it <= ' '}
-                    val pass: String = etPass.text.toString().trim{ it <= ' '}
+                    val name = binding.etName.text.toString().trim()
+                    val mail = binding.etEmail.text.toString().trim()
+                    val pass = binding.etPassword.text.toString()
+
+                    database = FirebaseDatabase.getInstance("https://housecleanaveiro-default-rtdb.europe-west1.firebasedatabase.app/")
+                    progressDialog.show()
                     FirebaseAuth.getInstance().createUserWithEmailAndPassword(mail, pass)
                         .addOnCompleteListener { task ->
                             if (task.isSuccessful) {
                                 val firebaseUser: FirebaseUser = task.result!!.user!!
-                                Toast.makeText(
-                                    this@LoginActivity,
-                                    "User registered sucessfully!",
-                                    Toast.LENGTH_LONG
-                                ).show()
-                                saveLoginPreferences(
-                                    true,
-                                    rememberCheckBox.isChecked,
-                                    etMail.text.toString(),
-                                    etPass.text.toString()
-                                )
-                                val intent =
-                                    Intent(this@LoginActivity, MainActivity::class.java)
-                                intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or
-                                        Intent.FLAG_ACTIVITY_CLEAR_TASK
-                                intent.putExtra("user_id", firebaseUser.uid)
-                                intent.putExtra("email_id", firebaseUser.email)
-                                startActivity(intent)
-                                finish()
+                                val user = User(firebaseUser.uid, name, mail)
+                                database.getReference("Users").child(firebaseUser.uid).setValue(user).addOnSuccessListener {
+                                    Toast.makeText(
+                                        this@LoginActivity,
+                                        "User registered sucessfully!",
+                                        Toast.LENGTH_LONG
+                                    ).show()
+                                    saveLoginPreferences(
+                                        true,
+                                        binding.rememberCheckBox.isChecked,
+                                        binding.etEmail.text.toString(),
+                                        binding.etPassword.text.toString()
+                                    )
+                                    progressDialog.dismiss()
+                                    val intent =
+                                        Intent(this@LoginActivity, MainActivity::class.java)
+                                    intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or
+                                            Intent.FLAG_ACTIVITY_CLEAR_TASK
+                                    startActivity(intent)
+                                    finish()
+                                }.addOnFailureListener{
+                                    progressDialog.dismiss()
+                                    Toast.makeText(
+                                        this@LoginActivity,
+                                        "Database error!",
+                                        Toast.LENGTH_LONG
+                                    ).show()
+                                }
                             } else {
+                                progressDialog.dismiss()
                                 Toast.makeText(
                                     this@LoginActivity,
                                     "User registration failed!",
@@ -91,40 +144,53 @@ class LoginActivity : AppCompatActivity() {
                             }
                         }
                 }
-                login -> {
-                    login(etMail.text.toString(), etPass.text.toString(), rememberCheckBox.isChecked)
-                }
-
             }
         }
-        registerTxt.setOnClickListener {
+        binding.registerText.setOnClickListener {
             login = !login
             if(login){
-                loginTxt.setText("LOGIN")
-                loginBtn.setText("LOGIN")
+                binding.tilUsername.isVisible = false
+                binding.logintext.setText("LOGIN")
+                binding.loginBtn.setText("LOGIN")
+                binding.registerText.setText("Register")
+                binding.loginOrRegirsterText.setText("Don't have an accoun?")
             } else {
-                loginTxt.setText("REGISTER")
-                loginBtn.setText("REGISTER")
+                binding.tilUsername.isVisible = true
+                binding.logintext.setText("REGISTER")
+                binding.loginBtn.setText("REGISTER")
+                binding.registerText.setText("Login")
+                binding.loginOrRegirsterText.setText("Already have an accoun?")
             }
         }
     }
 
+    private fun checkUser() {
+        val firebaseUser = firebaseAuth.currentUser
+        if (firebaseUser != null){
+            val intent =
+                Intent(this@LoginActivity, MainActivity::class.java)
+            intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+            startActivity(intent)
+            finish()
+        }
+    }
+
     private fun login(etmail: String, etpass: String, remember: Boolean) {
+        progressDialog.show()
         val mail: String = etmail.trim{ it <= ' '}
         val pass: String = etpass.trim{ it <= ' '}
         FirebaseAuth.getInstance().signInWithEmailAndPassword(mail, pass)
             .addOnCompleteListener { task ->
                 if (task.isSuccessful) {
                     saveLoginPreferences(true, remember, mail, pass)
+                    progressDialog.dismiss()
                     val intent =
                         Intent(this@LoginActivity, MainActivity::class.java)
-                    intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or
-                            Intent.FLAG_ACTIVITY_CLEAR_TASK
-                    intent.putExtra("user_id", FirebaseAuth.getInstance().currentUser!!.uid)
-                    intent.putExtra("email_id", mail)
+                    intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
                     startActivity(intent)
                     finish()
                 } else {
+                    progressDialog.dismiss()
                     Toast.makeText(
                         this@LoginActivity,
                         "Login Failed!",
@@ -154,7 +220,6 @@ class LoginActivity : AppCompatActivity() {
             rememberLogin = loginPreferences.getBoolean("REMEMBER_LOGIN", false)
             email = loginPreferences.getString("EMAIL", "").toString()
             password = loginPreferences.getString("PASSWORD", "").toString()
-            Toast.makeText(this, "Login prefs loaded!", Toast.LENGTH_LONG).show()
         }
     }
 
