@@ -9,12 +9,15 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.recyclerview.widget.LinearLayoutManager
+import com.example.houseclean.adapter.HousesAdapter
 import com.example.houseclean.databinding.FragmentHousesBinding
-import com.example.houseclean.databinding.FragmentPerfilBinding
+import com.google.firebase.auth.FirebaseAuth
 
 class HousesFragment : Fragment(R.layout.fragment_houses) {
     private var _binding: FragmentHousesBinding? = null
     private val binding get() = _binding!!
+    private val user = FirebaseAuth.getInstance().currentUser
     private lateinit var mainActivity: MainActivity
     private val addHouse = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
         if (it.resultCode == Activity.RESULT_OK) Toast.makeText(activity, "Added!", Toast.LENGTH_SHORT).show()
@@ -32,9 +35,14 @@ class HousesFragment : Fragment(R.layout.fragment_houses) {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
+        binding.houseLst.adapter = HousesAdapter(user?.uid.toString(), mainActivity.dbUser.houses)
+        binding.houseLst.layoutManager = LinearLayoutManager(activity)
+
         binding.addHouseBtn.setOnClickListener{
             val intent = Intent(activity, AddHouseActivity::class.java)
-            intent.putExtra("houseID", "1")
+            if (mainActivity.dbUser.houses?.isEmpty() == true) intent.putExtra("houseID", "0")
+            else intent.putExtra("houseID", (mainActivity.dbUser.houses?.size?.plus(1)).toString())
+            intent.putExtra("user", mainActivity.dbUser)
             addHouse.launch(intent)
         }
     }

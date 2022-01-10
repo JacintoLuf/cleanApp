@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/main_content"
@@ -7,40 +7,49 @@
     android:layout_height="match_parent"
     tools:context=".HousesFragment">
 
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center_horizontal|center_vertical"
-        android:text="No Houses"
-        android:textSize="30sp" />
+    <com.google.android.material.appbar.AppBarLayout
+        android:id="@+id/housesAppBar"
+        style="@style/ThemeOverlay.AppCompat.ActionBar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
 
-    <LinearLayout
+        <androidx.appcompat.widget.Toolbar
+            android:id="@+id/housesToolbar"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@color/lightGray"
+            app:popupTheme="@style/ThemeOverlay.AppCompat.Light"
+            app:title="Houses">
+
+        </androidx.appcompat.widget.Toolbar>
+    </com.google.android.material.appbar.AppBarLayout>
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/houseLst"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:orientation="vertical">
+        android:layout_below="@+id/housesAppBar"
+        android:scrollbars="vertical"
+        tools:listitem="@layout/house_item" />
 
-        <de.hdodenhof.circleimageview.CircleImageView
-            android:id="@+id/addHouseBtn"
-            android:layout_width="50dp"
-            android:layout_height="50dp"
-            android:layout_gravity="end"
-            android:src="@drawable/ic_add" />
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/addHouseBtn"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentEnd="true"
+        android:layout_alignParentBottom="true"
+        android:layout_marginEnd="16dp"
+        android:layout_marginBottom="16dp"
+        android:src="@drawable/ic_add"
+        app:backgroundTint="@color/lightGray" />
 
-        <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/houseLst"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:scrollbars="vertical" />
-
-        <com.google.android.material.floatingactionbutton.FloatingActionButton
-            android:id="@+id/addHouseBtn2"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="bottom|end"
-            android:layout_margin="16dp"
-            android:src="@drawable/ic_add"
-            app:layout_anchor="@id/houseLst"
-            app:layout_anchorGravity="bottom|right|end" />
-    </LinearLayout>
-
-</androidx.coordinatorlayout.widget.CoordinatorLayout>
+    <TextView
+        android:id="@+id/noHousesTxt"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerHorizontal="true"
+        android:layout_centerVertical="true"
+        android:text="No Houses"
+        android:textSize="30sp"
+        android:visibility="invisible" />
+</RelativeLayout>

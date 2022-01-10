@@ -3,6 +3,7 @@ package com.example.houseclean
 import android.app.Activity.RESULT_OK
 import android.content.Intent
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
 import android.os.Environment
 import androidx.fragment.app.Fragment
@@ -11,6 +12,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.annotation.RequiresApi
 import androidx.core.content.FileProvider
 import com.bumptech.glide.Glide
 import com.example.houseclean.databinding.FragmentPerfilBinding
@@ -32,9 +34,22 @@ class PerfilFragment : Fragment(R.layout.fragment_perfil) {
     private val user = FirebaseAuth.getInstance().currentUser
     private val storage = FirebaseStorage.getInstance().reference
     private lateinit var mainActivity: MainActivity
-    private val requestPermission = registerForActivityResult(ActivityResultContracts.RequestPermission()) { it ->
-        granted = granted && it
-        if (!granted) Toast.makeText(activity, "Permissions needed!", Toast.LENGTH_SHORT).show()
+    @RequiresApi(Build.VERSION_CODES.N)
+    private val requestPermission = registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { permissions ->
+        when {
+            permissions.getOrDefault(android.Manifest.permission.CAMERA, false) -> {
+                Toast.makeText(activity, "Camera permission needed!", Toast.LENGTH_SHORT).show()
+            }
+            permissions.getOrDefault(android.Manifest.permission.CAMERA, false) -> {
+                Toast.makeText(activity, "Camera permission needed!", Toast.LENGTH_SHORT).show()
+            }
+            permissions.getOrDefault(android.Manifest.permission.CAMERA, false) -> {
+                Toast.makeText(activity, "Camera permission needed!", Toast.LENGTH_SHORT).show()
+            }
+            else -> {
+                Toast.makeText(activity, "Camera permission needed!", Toast.LENGTH_SHORT).show()
+            }
+        }
     }
     private lateinit var tmpImageUri: Uri
     private var tmpImageFilePath = ""
@@ -60,6 +75,7 @@ class PerfilFragment : Fragment(R.layout.fragment_perfil) {
         return binding.root
     }
 
+    @RequiresApi(Build.VERSION_CODES.N)
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
@@ -79,17 +95,17 @@ class PerfilFragment : Fragment(R.layout.fragment_perfil) {
 
         binding.cameraBtn.setOnClickListener {
             getPermissions()
-            if (!granted) {
+            /*if (!granted) {
                 granted = true
-            }else{
-                tmpImageUri = FileProvider.getUriForFile(mainActivity,
-                    "com.example.houseclean.provider",
-                    mainActivity.createImageFile().also {
-                        tmpImageFilePath = it.absolutePath
-                    }
-                )
-                takePicture.launch(tmpImageUri)
-            }
+            }else{*/
+            tmpImageUri = FileProvider.getUriForFile(mainActivity,
+                "com.example.houseclean.provider",
+                mainActivity.createImageFile().also {
+                    tmpImageFilePath = it.absolutePath
+                }
+            )
+            takePicture.launch(tmpImageUri)
+            //}
         }
 
         binding.galleryBtn.setOnClickListener {
@@ -116,10 +132,11 @@ class PerfilFragment : Fragment(R.layout.fragment_perfil) {
         _binding = null
     }
 
+    @RequiresApi(Build.VERSION_CODES.N)
     private fun getPermissions() {
-        requestPermission.launch(android.Manifest.permission.CAMERA)
-        requestPermission.launch(android.Manifest.permission.READ_EXTERNAL_STORAGE)
-        requestPermission.launch(android.Manifest.permission.WRITE_EXTERNAL_STORAGE)
+        requestPermission.launch(arrayOf(android.Manifest.permission.CAMERA,
+            android.Manifest.permission.READ_EXTERNAL_STORAGE,
+            android.Manifest.permission.WRITE_EXTERNAL_STORAGE))
     }
 
     private fun uploadProfileImage(uri: Uri) {

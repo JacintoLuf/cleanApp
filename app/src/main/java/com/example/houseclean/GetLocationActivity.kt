@@ -5,10 +5,12 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.location.Geocoder
 import android.location.Location
+import android.os.Build
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.annotation.RequiresApi
 import androidx.core.app.ActivityCompat
 
 import com.google.android.gms.maps.CameraUpdateFactory
@@ -29,16 +31,29 @@ class GetLocationActivity : AppCompatActivity(), OnMapReadyCallback {
     private var fusedLocationProviderClient: FusedLocationProviderClient? = null
     private lateinit var binding: ActivityGetLocationBinding
     private var granted = true
-    private val requestPermission = registerForActivityResult(ActivityResultContracts.RequestPermission()) {
-        granted = granted && it
-        if (!granted) Toast.makeText(this, "Permissions needed!", Toast.LENGTH_SHORT).show()
-        //if (granted) fetchLocation()
+    @RequiresApi(Build.VERSION_CODES.N)
+    private val requestPermission = registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { permissions ->
+        when {
+            permissions.getOrDefault(android.Manifest.permission.INTERNET, false) -> {
+                Toast.makeText(this, "Location permission needed!", Toast.LENGTH_SHORT).show()
+            }
+            permissions.getOrDefault(android.Manifest.permission.ACCESS_FINE_LOCATION, false) -> {
+                Toast.makeText(this, "Location permission needed!", Toast.LENGTH_SHORT).show()
+            }
+            permissions.getOrDefault(android.Manifest.permission.ACCESS_COARSE_LOCATION, false) -> {
+                Toast.makeText(this, "Location permission needed!", Toast.LENGTH_SHORT).show()
+            }
+            else -> {
+                Toast.makeText(this, "Location permission needed!", Toast.LENGTH_SHORT).show()
+            }
+        }
     }
     private var currentLocation: Location? = null
     private var currentLatLng: String? = null
     private var currentMarker: Marker? = null
     private var addressLine: String? = null
 
+    @RequiresApi(Build.VERSION_CODES.N)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityGetLocationBinding.inflate(layoutInflater)
@@ -66,10 +81,17 @@ class GetLocationActivity : AppCompatActivity(), OnMapReadyCallback {
      * it inside the SupportMapFragment. This method will only be triggered once the user has
      * installed Google Play services and returned to the app.
      */
+    @RequiresApi(Build.VERSION_CODES.N)
     override fun onMapReady(googleMap: GoogleMap) {
         mMap = googleMap
 
-        val latLng = LatLng(currentLocation?.latitude!!, currentLocation?.longitude!!)
+        fetchLocation()
+        val latLng: LatLng
+        if (currentLocation == null) {
+            latLng = LatLng("0".toDouble(), "0".toDouble())
+        } else {
+            latLng = LatLng(currentLocation?.latitude!!, currentLocation?.longitude!!)
+        }
         drawMarker(latLng)
 
         mMap.setOnMapLongClickListener(object: GoogleMap.OnMapLongClickListener {
@@ -112,12 +134,14 @@ class GetLocationActivity : AppCompatActivity(), OnMapReadyCallback {
         return adrLn
     }
 
+    @RequiresApi(Build.VERSION_CODES.N)
     private fun getPermissions() {
-        requestPermission.launch(Manifest.permission.INTERNET)
-        requestPermission.launch(Manifest.permission.ACCESS_FINE_LOCATION)
-        requestPermission.launch(Manifest.permission.ACCESS_COARSE_LOCATION)
+        requestPermission.launch(arrayOf(Manifest.permission.INTERNET,
+            Manifest.permission.ACCESS_FINE_LOCATION,
+            Manifest.permission.ACCESS_COARSE_LOCATION))
     }
 
+    @RequiresApi(Build.VERSION_CODES.N)
     private fun fetchLocation() {
         if (ActivityCompat.checkSelfPermission(
                 this,
@@ -128,10 +152,10 @@ class GetLocationActivity : AppCompatActivity(), OnMapReadyCallback {
             ) != PackageManager.PERMISSION_GRANTED
         ) {
             getPermissions()
-            if (!granted) {
+            /*if (!granted) {
                 granted = true
                 finish()
-            }
+            }*/
             //return
         }
         fusedLocationProviderClient?.lastLocation?.addOnSuccessListener {
@@ -140,7 +164,7 @@ class GetLocationActivity : AppCompatActivity(), OnMapReadyCallback {
                 this.currentLatLng = it.latitude.toString().plus(",").plus(it.longitude)
                 val mapFragment = supportFragmentManager
                     .findFragmentById(R.id.map) as SupportMapFragment
-                mapFragment.getMapAsync(this)
+                if (mapFragment != null) mapFragment.getMapAsync(this)
             }
         }
     }

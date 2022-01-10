@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <item name="itemLstImg" type="id" />
+    <item name="houseLstAddress" type="id" />
+    <item name="houseLstTitle" type="id" />
+    <item name="houseLstImg" type="id" />
+</resources>

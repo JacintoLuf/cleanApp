@@ -12,6 +12,7 @@ import android.widget.*
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.view.isVisible
 import com.example.houseclean.databinding.ActivityLoginBinding
+import com.example.houseclean.model.User
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.database.FirebaseDatabase
@@ -34,7 +35,7 @@ class LoginActivity : AppCompatActivity() {
         binding = ActivityLoginBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        supportActionBar?.hide()
+        //supportActionBar?.hide()
         AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO)
 
         binding.tilUsername.isVisible = false

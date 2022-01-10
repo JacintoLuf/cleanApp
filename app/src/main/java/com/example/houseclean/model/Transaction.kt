@@ -1,5 +1,6 @@
-package com.example.houseclean
+package com.example.houseclean.model
 
+import java.io.Serializable
 import java.util.*
 
 data class Transaction(
@@ -14,4 +15,7 @@ data class Transaction(
     var status: String? = null,
     //completed after read qr code
     var completed: Boolean? = false
-)
+) : Serializable
+{
+
+}
