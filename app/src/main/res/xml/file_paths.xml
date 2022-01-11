@@ -4,7 +4,7 @@
         name="media"
         path="/" />
     <files-path
-        name="files"
+        name="images"
         path="."/>
     <external-files-path
         name="media"

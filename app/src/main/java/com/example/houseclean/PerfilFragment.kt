@@ -1,11 +1,14 @@
 package com.example.houseclean
 
 import android.app.Activity.RESULT_OK
+import android.app.AlertDialog
+import android.content.DialogInterface
 import android.content.Intent
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.os.Environment
+import android.util.Log
 import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
@@ -14,8 +17,10 @@ import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.RequiresApi
 import androidx.core.content.FileProvider
+import androidx.core.view.isVisible
 import com.bumptech.glide.Glide
 import com.example.houseclean.databinding.FragmentPerfilBinding
+import com.example.houseclean.model.User
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
@@ -28,23 +33,28 @@ import java.io.File
 
 class PerfilFragment : Fragment(R.layout.fragment_perfil) {
 
-    private var granted = true
+    private var granted = false
     private var _binding: FragmentPerfilBinding? = null
     private val binding get() = _binding!!
     private val user = FirebaseAuth.getInstance().currentUser
+    private var dbUser: User? = null
     private val storage = FirebaseStorage.getInstance().reference
     private lateinit var mainActivity: MainActivity
     @RequiresApi(Build.VERSION_CODES.N)
     private val requestPermission = registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { permissions ->
+        granted = permissions.get(android.Manifest.permission.CAMERA)!! &&
+                permissions.get(android.Manifest.permission.READ_EXTERNAL_STORAGE)!! &&
+                permissions.get(android.Manifest.permission.WRITE_EXTERNAL_STORAGE)!!
+        //if (!granted) Toast.makeText(activity, "Camera permission needed!", Toast.LENGTH_SHORT).show()
         when {
             permissions.getOrDefault(android.Manifest.permission.CAMERA, false) -> {
                 Toast.makeText(activity, "Camera permission needed!", Toast.LENGTH_SHORT).show()
             }
-            permissions.getOrDefault(android.Manifest.permission.CAMERA, false) -> {
-                Toast.makeText(activity, "Camera permission needed!", Toast.LENGTH_SHORT).show()
+            permissions.getOrDefault(android.Manifest.permission.READ_EXTERNAL_STORAGE, false) -> {
+                Toast.makeText(activity, "Storage permission needed!", Toast.LENGTH_SHORT).show()
             }
-            permissions.getOrDefault(android.Manifest.permission.CAMERA, false) -> {
-                Toast.makeText(activity, "Camera permission needed!", Toast.LENGTH_SHORT).show()
+            permissions.getOrDefault(android.Manifest.permission.WRITE_EXTERNAL_STORAGE, false) -> {
+                Toast.makeText(activity, "Storage permission needed!", Toast.LENGTH_SHORT).show()
             }
             else -> {
                 Toast.makeText(activity, "Camera permission needed!", Toast.LENGTH_SHORT).show()
@@ -79,42 +89,12 @@ class PerfilFragment : Fragment(R.layout.fragment_perfil) {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        mainActivity.database.getReference("Users").child(user?.uid.toString()).child("name")
-            .addValueEventListener(object: ValueEventListener{
-                override fun onDataChange(snapshot: DataSnapshot) {
-                    binding.perfilName.text = snapshot.getValue().toString()
-                }
-
-                override fun onCancelled(error: DatabaseError) {
-                    Toast.makeText(activity, "Can't access database!", Toast.LENGTH_SHORT).show()
-                }
-            })
-
-        binding.perfilEmail.text = user?.email.toString()
+        updateDbUser()
         updateImage()
 
-        binding.cameraBtn.setOnClickListener {
-            getPermissions()
-            /*if (!granted) {
-                granted = true
-            }else{*/
-            tmpImageUri = FileProvider.getUriForFile(mainActivity,
-                "com.example.houseclean.provider",
-                mainActivity.createImageFile().also {
-                    tmpImageFilePath = it.absolutePath
-                }
-            )
-            takePicture.launch(tmpImageUri)
-            //}
-        }
-
-        binding.galleryBtn.setOnClickListener {
-            getPermissions()
-            if (!granted) {
-                granted = true
-            }else{
-                selectImg.launch("files/*")
-            }
+        binding.perfilImage.setOnClickListener{
+            getCameraPermissions()
+            showImagePicDialog()
         }
 
         binding.logOutBtn.setOnClickListener {
@@ -127,13 +107,43 @@ class PerfilFragment : Fragment(R.layout.fragment_perfil) {
         }
     }
 
+    private fun showImagePicDialog() {
+        val builder = AlertDialog.Builder(activity)
+        builder.setTitle("Pick Image From")
+        builder.setItems(arrayOf("Camera", "Gallery"), object : DialogInterface.OnClickListener {
+            @RequiresApi(Build.VERSION_CODES.N)
+            override fun onClick(dialog: DialogInterface?, which: Int) {
+                when(which) {
+                    0 -> {
+                        if (!granted) getCameraPermissions()
+                        else {
+                            tmpImageUri = FileProvider.getUriForFile(mainActivity,
+                                "com.example.houseclean.provider",
+                                mainActivity.createImageFile().also {
+                                    tmpImageFilePath = it.absolutePath
+                                }
+                            )
+                            takePicture.launch(tmpImageUri)
+                        }
+                    }
+                    1 -> {
+                        if (!granted) getCameraPermissions()
+                        else selectImg.launch("images/*")
+                    }
+                }
+            }
+        })
+        builder.create().setCancelable(true)
+        builder.show()
+    }
+
     override fun onDestroy() {
         super.onDestroy()
         _binding = null
     }
 
     @RequiresApi(Build.VERSION_CODES.N)
-    private fun getPermissions() {
+    private fun getCameraPermissions() {
         requestPermission.launch(arrayOf(android.Manifest.permission.CAMERA,
             android.Manifest.permission.READ_EXTERNAL_STORAGE,
             android.Manifest.permission.WRITE_EXTERNAL_STORAGE))
@@ -166,5 +176,18 @@ class PerfilFragment : Fragment(R.layout.fragment_perfil) {
         val intent = Intent(activity?.applicationContext, LoginActivity::class.java)
         intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
         startActivity(intent)
+    }
+
+    fun updateDbUser() {
+        mainActivity.database.getReference("Users").child(user?.uid.toString())
+            .addValueEventListener(object: ValueEventListener {
+                override fun onDataChange(snapshot: DataSnapshot) {
+                    dbUser = snapshot.getValue(User::class.java)
+                    binding.perfilName.text = dbUser?.name
+                    binding.perfilEmail.text = dbUser?.email
+                }
+                override fun onCancelled(error: DatabaseError) {
+                }
+            })
     }
 }

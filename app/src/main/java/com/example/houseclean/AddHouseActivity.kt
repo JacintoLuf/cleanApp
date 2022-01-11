@@ -1,6 +1,8 @@
 package com.example.houseclean
 
 import android.app.Activity
+import android.app.AlertDialog
+import android.content.DialogInterface
 import android.content.Intent
 import android.net.Uri
 import android.os.Build
@@ -27,38 +29,28 @@ class AddHouseActivity : AppCompatActivity() {
     private val user = FirebaseAuth.getInstance()
     private val database = FirebaseDatabase.getInstance("https://housecleanaveiro-default-rtdb.europe-west1.firebasedatabase.app/")
     private val storage = FirebaseStorage.getInstance().reference
-    private var granted = true
+    private var granted = false
     /*private val requestPermission = registerForActivityResult(ActivityResultContracts.RequestPermission()) {
         granted = granted && it
         if (!granted) Toast.makeText(this, "Permissions needed!", Toast.LENGTH_SHORT).show()
     }*/
     @RequiresApi(Build.VERSION_CODES.N)
     private val requestPermission = registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { permissions ->
-        when {
-            permissions.getOrDefault(android.Manifest.permission.CAMERA, false) -> {
-                Toast.makeText(this, "Camera permission needed!", Toast.LENGTH_SHORT).show()
-            }
-            permissions.getOrDefault(android.Manifest.permission.CAMERA, false) -> {
-                Toast.makeText(this, "Camera permission needed!", Toast.LENGTH_SHORT).show()
-            }
-            permissions.getOrDefault(android.Manifest.permission.CAMERA, false) -> {
-                Toast.makeText(this, "Camera permission needed!", Toast.LENGTH_SHORT).show()
-            }
-            else -> {
-                Toast.makeText(this, "Camera permission needed!", Toast.LENGTH_SHORT).show()
-            }
-        }
+        granted = permissions.get(android.Manifest.permission.CAMERA)!! &&
+                permissions.get(android.Manifest.permission.READ_EXTERNAL_STORAGE)!! &&
+                permissions.get(android.Manifest.permission.WRITE_EXTERNAL_STORAGE)!!
+        if (!granted) Toast.makeText(this, "Camera/Gallery permission needed!", Toast.LENGTH_SHORT).show()
     }
     private lateinit var tmpImageUri: Uri
     private var tmpImageFilePath = ""
     private val selectImg = registerForActivityResult(ActivityResultContracts.GetContent()) {
-        tmpImageUri = it!!
-        //uploadHouseImage(tmpImageUri)
-        updateImage()
+        if (it != null) {
+            tmpImageUri = it
+            updateImage()
+        }
     }
     private val takePicture = registerForActivityResult(ActivityResultContracts.TakePicture()) {
         if (it) {
-            //uploadHouseImage(tmpImageUri)
             updateImage()
         }
     }
@@ -88,28 +80,9 @@ class AddHouseActivity : AppCompatActivity() {
         dbUser = intent.getSerializableExtra("user") as User
         houseID = intent.getStringExtra("houseID").toString()
 
-        binding.cameraBtn2.setOnClickListener {
-            getPermissions()
-            if (!granted) {
-                granted = true
-            }else{
-                tmpImageUri = FileProvider.getUriForFile(this,
-                    "com.example.houseclean.provider",
-                    createImageFile(houseID).also {
-                        tmpImageFilePath = it.absolutePath
-                    }
-                )
-                takePicture.launch(tmpImageUri)
-            }
-        }
-
-        binding.galleryBtn2.setOnClickListener {
-            getPermissions()
-            /*if (!granted) {
-                granted = true
-            }else{*/
-            selectImg.launch("files/*")
-            //}
+        binding.addHouseImg.setOnClickListener {
+            getCameraPermissions()
+            showImagePicDialog()
         }
 
         binding.houseLocation.setOnClickListener {
@@ -142,13 +115,6 @@ class AddHouseActivity : AppCompatActivity() {
                     Toast.makeText(this, "Error adding house!", Toast.LENGTH_SHORT).show()
                     finish()
                 }
-            /*database.getReference("Users").child(user.uid.toString()).child("houses/".plus(houseID))
-                .setValue(house).addOnSuccessListener{
-                    Toast.makeText(this, "House add success!", Toast.LENGTH_SHORT).show()
-                }.addOnFailureListener{
-                    Toast.makeText(this, "Error adding house!", Toast.LENGTH_SHORT).show()
-                    finish()
-                }*/
             uploadHouseImage(tmpImageUri)
             setResult(Activity.RESULT_OK)
             finish()
@@ -156,7 +122,38 @@ class AddHouseActivity : AppCompatActivity() {
     }
 
     @RequiresApi(Build.VERSION_CODES.N)
-    private fun getPermissions() {
+    private fun showImagePicDialog() {
+        val builder = AlertDialog.Builder(this)
+        builder.setTitle("Pick Image From")
+        builder.setItems(arrayOf("Camera", "Gallery"), object : DialogInterface.OnClickListener {
+            override fun onClick(dialog: DialogInterface?, which: Int) {
+                when(which) {
+                    0 -> {
+                        if (!granted) getCameraPermissions()
+                        else {
+                            tmpImageUri = FileProvider.getUriForFile(this@AddHouseActivity,
+                                "com.example.houseclean.provider",
+                                createImageFile(houseID).also {
+                                    tmpImageFilePath = it.absolutePath
+                                }
+                            )
+                            takePicture.launch(tmpImageUri)
+                        }
+                    }
+                    1 -> {
+                        if (!granted) getCameraPermissions()
+                        else selectImg.launch("images/*")
+                    }
+                }
+            }
+        })
+        builder.create().setCancelable(true)
+        builder.show()
+    }
+
+
+    @RequiresApi(Build.VERSION_CODES.N)
+    private fun getCameraPermissions() {
         requestPermission.launch(arrayOf(android.Manifest.permission.CAMERA,
             android.Manifest.permission.READ_EXTERNAL_STORAGE,
             android.Manifest.permission.WRITE_EXTERNAL_STORAGE))
@@ -178,6 +175,6 @@ class AddHouseActivity : AppCompatActivity() {
     }
 
     private fun updateImage() {
-        Glide.with(this).load(tmpImageUri).into(binding.addHouseImg)
+        Glide.with(binding.addHouseImg).load(tmpImageUri).into(binding.addHouseImg)
     }
 }

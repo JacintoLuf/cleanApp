@@ -4,7 +4,7 @@ import java.io.Serializable
 
 
 data class User(
-    val UID: String? = null,
+    var UID: String? = null,
     var name: String? = null,
     val email: String? = null,
     var houses: MutableList<House>? = arrayListOf(),

@@ -5,12 +5,21 @@ import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.core.view.isVisible
 import com.example.houseclean.databinding.FragmentMapBinding
 import com.example.houseclean.databinding.FragmentPerfilBinding
+import com.example.houseclean.model.User
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.database.DataSnapshot
+import com.google.firebase.database.DatabaseError
+import com.google.firebase.database.ValueEventListener
 
 class MapFragment : Fragment(R.layout.fragment_map) {
     private var _binding: FragmentMapBinding? = null
     private val binding get() = _binding!!
+    private lateinit var mainActivity: MainActivity
+    private val user = FirebaseAuth.getInstance().currentUser
+    private var dbUser: User? = null
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -20,6 +29,23 @@ class MapFragment : Fragment(R.layout.fragment_map) {
         //return inflater.inflate(R.layout.fragment_map, container, false)
         _binding = FragmentMapBinding.inflate(inflater, container, false)
         return binding.root
+    }
+
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+
+        updateDbUser()
+    }
+
+    fun updateDbUser() {
+        mainActivity.database.getReference("Users").child(user?.uid.toString())
+            .addValueEventListener(object: ValueEventListener {
+                override fun onDataChange(snapshot: DataSnapshot) {
+                    dbUser = snapshot.getValue(User::class.java)
+                }
+                override fun onCancelled(error: DatabaseError) {
+                }
+            })
     }
 
 }

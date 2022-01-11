@@ -1,10 +1,15 @@
 package com.example.houseclean
 
 import android.Manifest
+import android.app.AlertDialog
+import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.location.Geocoder
 import android.location.Location
+import android.location.LocationManager
+import android.location.LocationRequest
+import android.location.LocationRequest.Builder
 import android.os.Build
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
@@ -53,34 +58,31 @@ class GetLocationActivity : AppCompatActivity(), OnMapReadyCallback {
     private var currentMarker: Marker? = null
     private var addressLine: String? = null
 
-    @RequiresApi(Build.VERSION_CODES.N)
+    @RequiresApi(Build.VERSION_CODES.S)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityGetLocationBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        binding.addLocationBtn.setCircleBackgroundColorResource(android.R.color.darker_gray)
+        supportActionBar?.hide()
+
+        getPermissions()
+        fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this)
+        fetchLocation()
+
         binding.addLocationBtn.setOnClickListener{
             val intent = Intent()
+            if (addressLine == null || currentLatLng == null){
+                setResult(RESULT_CANCELED, intent)
+                finish()
+            }
             intent.putExtra("address", addressLine)
             intent.putExtra("location", currentLatLng)
             setResult(RESULT_OK, intent)
             finish()
         }
-
-        fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this)
-        fetchLocation()
     }
 
-    /**
-     * Manipulates the map once available.
-     * This callback is triggered when the map is ready to be used.
-     * This is where we can add markers or lines, add listeners or move the camera. In this case,
-     * we just add a marker near Sydney, Australia.
-     * If Google Play services is not installed on the device, the user will be prompted to install
-     * it inside the SupportMapFragment. This method will only be triggered once the user has
-     * installed Google Play services and returned to the app.
-     */
     @RequiresApi(Build.VERSION_CODES.N)
     override fun onMapReady(googleMap: GoogleMap) {
         mMap = googleMap
@@ -141,6 +143,12 @@ class GetLocationActivity : AppCompatActivity(), OnMapReadyCallback {
             Manifest.permission.ACCESS_COARSE_LOCATION))
     }
 
+    private fun isLocationEnabled(): Boolean {
+        val locationManager: LocationManager = getSystemService(Context.LOCATION_SERVICE) as LocationManager
+        return locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER) ||
+                locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER)
+    }
+
     @RequiresApi(Build.VERSION_CODES.N)
     private fun fetchLocation() {
         if (ActivityCompat.checkSelfPermission(
@@ -152,20 +160,31 @@ class GetLocationActivity : AppCompatActivity(), OnMapReadyCallback {
             ) != PackageManager.PERMISSION_GRANTED
         ) {
             getPermissions()
-            /*if (!granted) {
-                granted = true
-                finish()
-            }*/
-            //return
+            if (!granted) finish()
+        } else {
+            if (isLocationEnabled()) {
+                fusedLocationProviderClient!!.lastLocation.addOnSuccessListener {
+                    if(it != null) {
+                        this.currentLocation = it
+                        this.currentLatLng = it.latitude.toString().plus(",").plus(it.longitude)
+                        val mapFragment = supportFragmentManager.findFragmentById(R.id.getLocationMap) as SupportMapFragment
+                        mapFragment.getMapAsync(this@GetLocationActivity)
+                    }
+                }?.addOnFailureListener {
+                    //showMapDialog()
+                }
+            } else Toast.makeText(this, "Please enable location", Toast.LENGTH_SHORT).show()
         }
-        fusedLocationProviderClient?.lastLocation?.addOnSuccessListener {
-            if(it != null) {
-                this.currentLocation = it
-                this.currentLatLng = it.latitude.toString().plus(",").plus(it.longitude)
-                val mapFragment = supportFragmentManager
-                    .findFragmentById(R.id.map) as SupportMapFragment
-                if (mapFragment != null) mapFragment.getMapAsync(this)
-            }
+    }
+
+    private fun showMapDialog() {
+        val builder = AlertDialog.Builder(this)
+        builder.setTitle("Error")
+        builder.setMessage("Error getting location")
+        builder.setNeutralButton("ok") {_, _ ->
+            finish()
         }
+        builder.create().setCancelable(true)
+        builder.show()
     }
 }

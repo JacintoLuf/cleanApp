@@ -12,34 +12,9 @@
         android:layout_height="200dp"
         android:layout_marginTop="64dp"
         android:src="@drawable/ic_perfil"
-        app:civ_border_color="@color/black"
-        app:civ_border_width="3dp"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.497"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
-
-    <Button
-        android:id="@+id/galleryBtn"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="40dp"
-        android:text="Gallery"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.5"
-        app:layout_constraintStart_toEndOf="@+id/cameraBtn"
-        app:layout_constraintTop_toBottomOf="@+id/perfilImage" />
-
-    <Button
-        android:id="@+id/cameraBtn"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="40dp"
-        android:text="Camera"
-        app:layout_constraintEnd_toStartOf="@+id/galleryBtn"
-        app:layout_constraintHorizontal_bias="0.5"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/perfilImage" />
 
     <LinearLayout
         android:id="@+id/linearLayout2"
@@ -65,13 +40,13 @@
         android:id="@+id/linearLayout"
         android:layout_width="match_parent"
         android:layout_height="50dp"
-        android:layout_marginTop="40dp"
+        android:layout_marginTop="56dp"
         android:gravity="center"
         android:orientation="horizontal"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/cameraBtn">
+        app:layout_constraintTop_toBottomOf="@+id/perfilImage">
 
         <TextView
             android:id="@+id/perfilName"

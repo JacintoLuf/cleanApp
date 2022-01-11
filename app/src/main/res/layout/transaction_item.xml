@@ -6,4 +6,84 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
+    <ImageView
+        android:id="@+id/transactionHouseImg"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:src="@drawable/ic_home" />
+
+    <TextView
+        android:id="@+id/costumerName"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignTop="@+id/transactionHouseImg"
+        android:layout_marginStart="16dp"
+        android:layout_toEndOf="@+id/transactionHouseImg"
+        android:textColor="@color/darkGray"
+        android:textSize="18sp"
+        android:textStyle="bold" />
+
+    <TextView
+        android:id="@+id/transactionLstLocation"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/costumerName"
+        android:layout_toEndOf="@+id/transactionHouseImg"
+        android:textColor="@color/darkGray"
+        android:textStyle="bold"
+        android:layout_marginStart="16dp"
+        android:textSize="16sp" />
+
+    <TextView
+        android:id="@+id/transactionLstAddress"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/transactionLstLocation"
+        android:layout_toEndOf="@+id/transactionHouseImg"
+        android:ellipsize="end"
+        android:lines="1"
+        android:textColor="@color/darkGray"
+        android:layout_marginStart="16dp"
+        android:textSize="16sp" />
+
+    <TextView
+        android:id="@+id/transactionStart"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignTop="@+id/transactionHouseImg"
+        android:layout_marginStart="8dp"
+        android:layout_toEndOf="@+id/transactionLstAddress"
+        android:textColor="@color/darkGray"
+        android:textSize="16sp"
+        android:textStyle="bold" />
+
+    <TextView
+        android:id="@+id/transactionEnd"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/transactionStart"
+        android:layout_marginStart="8dp"
+        android:layout_toEndOf="@+id/transactionLstAddress"
+        android:textColor="@color/darkGray"
+        android:textSize="16sp"
+        android:textStyle="bold" />
+
+    <TextView
+        android:id="@+id/transactionLstStatus"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignTop="@+id/transactionHouseImg"
+        android:layout_marginStart="8dp"
+        android:layout_toEndOf="@+id/transactionEnd"
+        android:textColor="@color/darkGray"
+        android:textSize="16sp"
+        android:textStyle="bold" />
+
+    <Button
+        android:id="@+id/transactionBtn"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_toEndOf="@+id/transactionEnd"
+        android:gravity="end"
+        android:layout_below="@+id/transactionLstStatus"/>
 </RelativeLayout>

@@ -10,22 +10,26 @@ import com.bumptech.glide.Glide
 import com.example.houseclean.R
 import com.example.houseclean.model.House
 import com.google.firebase.storage.FirebaseStorage
-class HousesAdapter(private val UID: String, private val houses: MutableList<House>? = arrayListOf()): RecyclerView.Adapter<HousesAdapter.HouseViewHolder>() {
+class HousesAdapter(private val UID: String?, private val houses: MutableList<House>? = arrayListOf()): RecyclerView.Adapter<HousesAdapter.HousesViewHolder>() {
     private val storage = FirebaseStorage.getInstance().reference
+    private var selectedHouse = -1
     //private var houses = allHouses?.filter { it.deleted == false }?.sortedBy { it.ID.toInt() }
 
-    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): HouseViewHolder {
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): HousesViewHolder {
         val view = LayoutInflater.from(parent.context).inflate(R.layout.house_item, parent, false)
-        return HouseViewHolder(view)
-        /*return HouseViewHolder(
-            HouseItemUI().createView(
-                AnkoContext.create(parent.context, parent)
-            )
-        )*/
+        return HousesViewHolder(view)
     }
 
-    override fun onBindViewHolder(holder: HouseViewHolder, position: Int) {
+    override fun onBindViewHolder(holder: HousesViewHolder, position: Int) {
         holder.bind(position)
+        holder.itemView.setOnClickListener {
+            onItemClick?.invoke(position)
+        }
+        holder.itemView.setOnLongClickListener {
+            onItemLongClick?.invoke(position)
+            return@setOnLongClickListener true
+        }
+        if (selectedHouse == position) selectedHouse = -1
     }
 
     override fun getItemCount(): Int {
@@ -35,7 +39,10 @@ class HousesAdapter(private val UID: String, private val houses: MutableList<Hou
         return 0
     }
 
-    inner class HouseViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
+    var onItemClick: ((Int) -> Unit)? = null
+    var onItemLongClick: ((Int) -> Unit)? = null
+
+    inner class HousesViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         private val img = itemView.findViewById<ImageView>(R.id.houseLstImg)
         private val title = itemView.findViewById<TextView>(R.id.houseLstTitle)
         private val addr = itemView.findViewById<TextView>(R.id.houseLstAddress)
@@ -49,7 +56,7 @@ class HousesAdapter(private val UID: String, private val houses: MutableList<Hou
                 }.addOnFailureListener{
                     img.setImageResource(R.drawable.ic_home)
                 }
-                title.setText("House ".plus((pos.toInt()+1).toString()))
+                title.setText("House ".plus((pos+1).toString()))
                 addr.setText(this?.address)
             }
         }
