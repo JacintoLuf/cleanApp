@@ -55,6 +55,7 @@ class AddHouseActivity : AppCompatActivity() {
         }
     }
     private val getLocation = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
+        if (it.resultCode == Activity.RESULT_CANCELED) print("\n \n \n Resultado not ok \n \n \n")
         if (it.resultCode == Activity.RESULT_OK) {
             if (it.data != null) {
                 binding.etHouseAddress.setText(it.data?.getStringExtra("address").toString())
@@ -79,6 +80,9 @@ class AddHouseActivity : AppCompatActivity() {
 
         dbUser = intent.getSerializableExtra("user") as User
         houseID = intent.getStringExtra("houseID").toString()
+
+        print("\n \n \n user uid: "+dbUser.UID+" \n \n \n")
+        print("\n \n \n houseID: "+houseID+" \n \n \n")
 
         binding.addHouseImg.setOnClickListener {
             getCameraPermissions()

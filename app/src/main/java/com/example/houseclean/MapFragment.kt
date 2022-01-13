@@ -12,13 +12,14 @@ import com.example.houseclean.model.User
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
+import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.database.ValueEventListener
 
 class MapFragment : Fragment(R.layout.fragment_map) {
     private var _binding: FragmentMapBinding? = null
     private val binding get() = _binding!!
-    private lateinit var mainActivity: MainActivity
     private val user = FirebaseAuth.getInstance().currentUser
+    private val database = FirebaseDatabase.getInstance("https://housecleanaveiro-default-rtdb.europe-west1.firebasedatabase.app/")
     private var dbUser: User? = null
 
     override fun onCreateView(
@@ -38,7 +39,7 @@ class MapFragment : Fragment(R.layout.fragment_map) {
     }
 
     fun updateDbUser() {
-        mainActivity.database.getReference("Users").child(user?.uid.toString())
+        database.getReference("Users").child(user?.uid.toString())
             .addValueEventListener(object: ValueEventListener {
                 override fun onDataChange(snapshot: DataSnapshot) {
                     dbUser = snapshot.getValue(User::class.java)

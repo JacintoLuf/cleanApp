@@ -1,6 +1,7 @@
 package com.example.houseclean
 
 import android.Manifest
+import android.app.Activity
 import android.app.AlertDialog
 import android.content.Context
 import android.content.Intent
@@ -8,8 +9,6 @@ import android.content.pm.PackageManager
 import android.location.Geocoder
 import android.location.Location
 import android.location.LocationManager
-import android.location.LocationRequest
-import android.location.LocationRequest.Builder
 import android.os.Build
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
@@ -35,22 +34,17 @@ class GetLocationActivity : AppCompatActivity(), OnMapReadyCallback {
     private lateinit var mMap: GoogleMap
     private var fusedLocationProviderClient: FusedLocationProviderClient? = null
     private lateinit var binding: ActivityGetLocationBinding
-    private var granted = true
+    private var granted = false
     @RequiresApi(Build.VERSION_CODES.N)
     private val requestPermission = registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { permissions ->
-        when {
-            permissions.getOrDefault(android.Manifest.permission.INTERNET, false) -> {
-                Toast.makeText(this, "Location permission needed!", Toast.LENGTH_SHORT).show()
-            }
-            permissions.getOrDefault(android.Manifest.permission.ACCESS_FINE_LOCATION, false) -> {
-                Toast.makeText(this, "Location permission needed!", Toast.LENGTH_SHORT).show()
-            }
-            permissions.getOrDefault(android.Manifest.permission.ACCESS_COARSE_LOCATION, false) -> {
-                Toast.makeText(this, "Location permission needed!", Toast.LENGTH_SHORT).show()
-            }
-            else -> {
-                Toast.makeText(this, "Location permission needed!", Toast.LENGTH_SHORT).show()
-            }
+        granted = permissions[Manifest.permission.INTERNET]!! &&
+                permissions[Manifest.permission.ACCESS_FINE_LOCATION]!! &&
+                permissions[Manifest.permission.ACCESS_COARSE_LOCATION]!!
+        if (!granted) {
+            Toast.makeText(this, "Location permission needed!", Toast.LENGTH_SHORT).show()
+            val intent = Intent()
+            setResult(Activity.RESULT_CANCELED, intent)
+            finish()
         }
     }
     private var currentLocation: Location? = null
@@ -87,43 +81,26 @@ class GetLocationActivity : AppCompatActivity(), OnMapReadyCallback {
     override fun onMapReady(googleMap: GoogleMap) {
         mMap = googleMap
 
-        fetchLocation()
-        val latLng: LatLng
-        if (currentLocation == null) {
-            latLng = LatLng("0".toDouble(), "0".toDouble())
+        val latLng: LatLng = if (currentLocation == null) {
+            LatLng("0".toDouble(), "0".toDouble())
         } else {
-            latLng = LatLng(currentLocation?.latitude!!, currentLocation?.longitude!!)
+            LatLng(currentLocation?.latitude!!, currentLocation?.longitude!!)
         }
+
         drawMarker(latLng)
 
-        mMap.setOnMapLongClickListener(object: GoogleMap.OnMapLongClickListener {
-            override fun onMapLongClick(latLng: LatLng) {
-                currentLatLng = latLng.latitude.toString().plus(",").plus(latLng.longitude)
-                if (currentMarker != null) currentMarker?.remove()
-                drawMarker(latLng)
-            }
-        })
-
-        mMap.setOnMarkerDragListener(object : GoogleMap.OnMarkerDragListener {
-            override fun onMarkerDrag(p0: Marker) {
-                TODO("Not yet implemented")
-            }
-
-            override fun onMarkerDragEnd(marker: Marker) {
-                if (currentMarker != null) currentMarker?.remove()
-                val newLatLng = LatLng(marker.position.latitude, marker.position.longitude)
-                drawMarker(newLatLng)
-            }
-
-            override fun onMarkerDragStart(p0: Marker) {
-                TODO("Not yet implemented")
-            }
-        })
+        mMap.setOnMapLongClickListener { latLng ->
+            currentLatLng = latLng.latitude.toString().plus(",").plus(latLng.longitude)
+            if (currentMarker != null) currentMarker?.remove()
+            drawMarker(latLng)
+        }
     }
 
     private fun drawMarker(latLng: LatLng) {
         val markerOptions = MarkerOptions().position(latLng).title("My house").snippet(getAddress(latLng.latitude, latLng.longitude)).draggable(true)
-        mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(latLng, 15f))
+        //val cameraPosition = CameraPosition.Builder().target(latLng).zoom(14f).build()
+        //mMap.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition))
+        mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(latLng, 14f))
         currentMarker = mMap.addMarker(markerOptions)
         currentMarker?.showInfoWindow()
     }
@@ -159,8 +136,11 @@ class GetLocationActivity : AppCompatActivity(), OnMapReadyCallback {
                 Manifest.permission.ACCESS_COARSE_LOCATION
             ) != PackageManager.PERMISSION_GRANTED
         ) {
-            getPermissions()
-            if (!granted) finish()
+            if (!granted) {
+                val intent = Intent()
+                setResult(RESULT_CANCELED, intent)
+                finish()
+            }
         } else {
             if (isLocationEnabled()) {
                 fusedLocationProviderClient!!.lastLocation.addOnSuccessListener {
@@ -170,8 +150,8 @@ class GetLocationActivity : AppCompatActivity(), OnMapReadyCallback {
                         val mapFragment = supportFragmentManager.findFragmentById(R.id.getLocationMap) as SupportMapFragment
                         mapFragment.getMapAsync(this@GetLocationActivity)
                     }
-                }?.addOnFailureListener {
-                    //showMapDialog()
+                }.addOnFailureListener {
+                    showMapDialog()
                 }
             } else Toast.makeText(this, "Please enable location", Toast.LENGTH_SHORT).show()
         }

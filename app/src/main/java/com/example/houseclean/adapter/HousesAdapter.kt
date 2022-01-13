@@ -10,9 +10,9 @@ import com.bumptech.glide.Glide
 import com.example.houseclean.R
 import com.example.houseclean.model.House
 import com.google.firebase.storage.FirebaseStorage
+
 class HousesAdapter(private val UID: String?, private val houses: MutableList<House>? = arrayListOf()): RecyclerView.Adapter<HousesAdapter.HousesViewHolder>() {
     private val storage = FirebaseStorage.getInstance().reference
-    private var selectedHouse = -1
     //private var houses = allHouses?.filter { it.deleted == false }?.sortedBy { it.ID.toInt() }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): HousesViewHolder {
@@ -29,15 +29,9 @@ class HousesAdapter(private val UID: String?, private val houses: MutableList<Ho
             onItemLongClick?.invoke(position)
             return@setOnLongClickListener true
         }
-        if (selectedHouse == position) selectedHouse = -1
     }
 
-    override fun getItemCount(): Int {
-        if (houses != null) {
-            return houses.size
-        }
-        return 0
-    }
+    override fun getItemCount(): Int = if (houses.isNullOrEmpty()) 0 else houses.size
 
     var onItemClick: ((Int) -> Unit)? = null
     var onItemLongClick: ((Int) -> Unit)? = null

@@ -23,10 +23,10 @@ class MainActivity : AppCompatActivity() {
     val database = FirebaseDatabase.getInstance("https://housecleanaveiro-default-rtdb.europe-west1.firebasedatabase.app/")
     private val user = FirebaseAuth.getInstance().currentUser
     private lateinit var binding: ActivityMainBinding
-    private lateinit var mapFragment: MapFragment
-    private lateinit var inboxFragment: InboxFragment
-    private lateinit var housesFragment: HousesFragment
-    private lateinit var perfilFragment: PerfilFragment
+    private val mapFragment = MapFragment()
+    private val inboxFragment = InboxFragment()
+    private val housesFragment = HousesFragment()
+    private val perfilFragment = PerfilFragment()
     lateinit var dbUser: User
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -39,11 +39,6 @@ class MainActivity : AppCompatActivity() {
 
         initDbValues()
         setUpTapBar()
-        //while (!this::dbUser.isInitialized)
-        mapFragment = MapFragment()
-        inboxFragment = InboxFragment()
-        housesFragment = HousesFragment()
-        perfilFragment = PerfilFragment()
 
         binding.bottomNavBar.setItemSelected(R.id.nav_inbox)
         supportFragmentManager.beginTransaction().apply {
@@ -102,6 +97,10 @@ class MainActivity : AppCompatActivity() {
                     Log.d(TAG, "\n\ndata snapshot: " + error.toString() + "\n\n")
                 }
             })
+    }
+
+    fun not() {
+        binding.bottomNavBar.showBadge(R.id.nav_inbox)
     }
 
     fun createImageFile(): File {

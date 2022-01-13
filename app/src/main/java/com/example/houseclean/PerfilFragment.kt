@@ -1,15 +1,11 @@
 package com.example.houseclean
 
-import android.app.Activity.RESULT_OK
 import android.app.AlertDialog
 import android.content.DialogInterface
 import android.content.Intent
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
-import android.os.Environment
-import android.util.Log
-import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -17,18 +13,15 @@ import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.RequiresApi
 import androidx.core.content.FileProvider
-import androidx.core.view.isVisible
+import androidx.fragment.app.Fragment
 import com.bumptech.glide.Glide
 import com.example.houseclean.databinding.FragmentPerfilBinding
 import com.example.houseclean.model.User
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
-import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.database.ValueEventListener
-import com.google.firebase.ktx.Firebase
 import com.google.firebase.storage.FirebaseStorage
-import java.io.File
 
 
 class PerfilFragment : Fragment(R.layout.fragment_perfil) {
@@ -42,9 +35,9 @@ class PerfilFragment : Fragment(R.layout.fragment_perfil) {
     private lateinit var mainActivity: MainActivity
     @RequiresApi(Build.VERSION_CODES.N)
     private val requestPermission = registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { permissions ->
-        granted = permissions.get(android.Manifest.permission.CAMERA)!! &&
-                permissions.get(android.Manifest.permission.READ_EXTERNAL_STORAGE)!! &&
-                permissions.get(android.Manifest.permission.WRITE_EXTERNAL_STORAGE)!!
+        granted = permissions[android.Manifest.permission.CAMERA]!! &&
+                permissions[android.Manifest.permission.READ_EXTERNAL_STORAGE]!! &&
+                permissions[android.Manifest.permission.WRITE_EXTERNAL_STORAGE]!!
         //if (!granted) Toast.makeText(activity, "Camera permission needed!", Toast.LENGTH_SHORT).show()
         when {
             permissions.getOrDefault(android.Manifest.permission.CAMERA, false) -> {

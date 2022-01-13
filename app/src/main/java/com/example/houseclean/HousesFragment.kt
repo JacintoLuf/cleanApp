@@ -1,23 +1,26 @@
 package com.example.houseclean
 
-import android.annotation.SuppressLint
 import android.app.Activity
+import android.app.AlertDialog
 import android.content.Intent
 import android.os.Bundle
 import android.view.*
 import androidx.fragment.app.Fragment
 import android.widget.Toast
 import androidx.activity.result.ActivityResultLauncher
-import androidx.activity.result.contract.ActivityResultContract
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.view.isVisible
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.houseclean.adapter.HousesAdapter
 import com.example.houseclean.databinding.FragmentHousesBinding
+import com.example.houseclean.model.House
+import com.example.houseclean.model.Transaction
 import com.example.houseclean.model.User
+import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
+import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.database.ValueEventListener
 
 class HousesFragment : Fragment(R.layout.fragment_houses) {
@@ -25,14 +28,12 @@ class HousesFragment : Fragment(R.layout.fragment_houses) {
     private val binding get() = _binding!!
     private lateinit var mainActivity: MainActivity
     private val user = FirebaseAuth.getInstance().currentUser
+    private val database = FirebaseDatabase.getInstance("https://housecleanaveiro-default-rtdb.europe-west1.firebasedatabase.app/")
     private var dbUser: User? = null
     private lateinit var adapter: HousesAdapter
     private lateinit var addHouse: ActivityResultLauncher<Intent>
-    private val addTransaction = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
-        if (it.resultCode == Activity.RESULT_OK) {
-
-        }
-    }
+    private lateinit var dialog: AlertDialog
+    private lateinit var selectedHouse: House
 
 
     override fun onCreateView(
@@ -60,34 +61,59 @@ class HousesFragment : Fragment(R.layout.fragment_houses) {
         binding.addHouseBtn.setOnClickListener{
             val intent = Intent(activity, AddHouseActivity::class.java)
             if (dbUser?.houses?.isEmpty() == true) intent.putExtra("houseID", "0")
-            else intent.putExtra("houseID", (dbUser?.houses?.size?.plus(1)).toString())
+            else intent.putExtra("houseID", (dbUser?.houses?.size).toString())
             intent.putExtra("user", dbUser)
             addHouse.launch(intent)
+        }
+
+        val builder = AlertDialog.Builder(activity)
+        val view = View.inflate(activity, R.layout.clean_house_dialog, null)
+        dialog = builder.setView(view).create()
+        val btn = view.findViewById<FloatingActionButton>(R.id.cleanHouseBtn)
+        btn.setOnClickListener {
+            addTransaction()
+            dialog.dismiss()
         }
 
         adapter.onItemClick = {
             openHouseDetails(it)
         }
         adapter.onItemLongClick = {
-            addTransaction(it)
+            selectedHouse = dbUser?.houses?.get(it)!!
+            dialog.show()
+            dialog.window?.setBackgroundDrawableResource(android.R.color.transparent)
         }
     }
 
     private fun openHouseDetails(pos: Int) {
 
     }
-    private fun addTransaction(pos: Int) {
-        val intent = Intent(activity, AddTransactionActivity::class.java)
-        intent.putExtra("house", dbUser?.houses?.get(pos))
-        addTransaction.launch(intent)
+    private fun addTransaction() {
+        var transaction = Transaction(
+            transactionID = (if (dbUser?.transactions.isNullOrEmpty()) 0 else dbUser?.transactions?.size),
+            clientID = dbUser?.UID,
+            clientName = dbUser?.name,
+            house = selectedHouse,
+            status = "waiting"
+        )
+        if (dbUser?.transactions.isNullOrEmpty()) dbUser?.transactions = arrayListOf(transaction)
+        else dbUser?.transactions?.add(transaction)
+
+        database.getReference("Users").child(dbUser?.UID.toString())
+            .setValue(dbUser).addOnSuccessListener{
+                mainActivity.not()
+                Toast.makeText(activity, "Waiting for cleaners!", Toast.LENGTH_SHORT).show()
+            }.addOnFailureListener{
+                Toast.makeText(activity, "Error", Toast.LENGTH_SHORT).show()
+            }
     }
 
     fun updateDbUser() {
-        mainActivity.database.getReference("Users").child(user?.uid.toString())
+        database.getReference("Users").child(user?.uid.toString())
             .addValueEventListener(object: ValueEventListener {
                 override fun onDataChange(snapshot: DataSnapshot) {
                     dbUser = snapshot.getValue(User::class.java)
-                    if (dbUser?.houses.isNullOrEmpty()) binding.noHousesTxt.isVisible = true
+                    binding.noHousesTxt.isVisible = dbUser?.houses.isNullOrEmpty()
                 }
                 override fun onCancelled(error: DatabaseError) {
                 }
