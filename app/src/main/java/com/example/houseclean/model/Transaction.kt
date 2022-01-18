@@ -15,6 +15,3 @@ data class Transaction(
     //completed after read qr code
     var completed: Boolean? = false
 ) : Serializable
-{
-
-}

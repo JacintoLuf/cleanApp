@@ -29,9 +29,6 @@
         <activity
             android:name=".ProgressBarActivity"
             android:exported="false" />
-        <activity
-            android:name=".AddTransactionActivity"
-            android:exported="false" />
 
         <meta-data
             android:name="com.google.android.gms.version"

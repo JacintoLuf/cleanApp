@@ -10,10 +10,10 @@ import com.bumptech.glide.Glide
 import com.example.houseclean.R
 import com.example.houseclean.model.House
 import com.google.firebase.storage.FirebaseStorage
+import de.hdodenhof.circleimageview.CircleImageView
 
 class HousesAdapter(private val UID: String?, private val houses: MutableList<House>? = arrayListOf()): RecyclerView.Adapter<HousesAdapter.HousesViewHolder>() {
     private val storage = FirebaseStorage.getInstance().reference
-    //private var houses = allHouses?.filter { it.deleted == false }?.sortedBy { it.ID.toInt() }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): HousesViewHolder {
         val view = LayoutInflater.from(parent.context).inflate(R.layout.house_item, parent, false)
@@ -37,7 +37,7 @@ class HousesAdapter(private val UID: String?, private val houses: MutableList<Ho
     var onItemLongClick: ((Int) -> Unit)? = null
 
     inner class HousesViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
-        private val img = itemView.findViewById<ImageView>(R.id.houseLstImg)
+        private val img = itemView.findViewById<CircleImageView>(R.id.houseLstImg)
         private val title = itemView.findViewById<TextView>(R.id.houseLstTitle)
         private val addr = itemView.findViewById<TextView>(R.id.houseLstAddress)
 

@@ -10,6 +10,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.example.houseclean.R
 import com.example.houseclean.model.Transaction
 import com.google.firebase.storage.FirebaseStorage
+import de.hdodenhof.circleimageview.CircleImageView
 
 class TransactionsAdapter(private val UID: String?, private val transactions: MutableList<Transaction>? = arrayListOf()): RecyclerView.Adapter<TransactionsAdapter.TransactionViewHolder>() {
     private val storage = FirebaseStorage.getInstance().reference
@@ -25,11 +26,13 @@ class TransactionsAdapter(private val UID: String?, private val transactions: Mu
 
     override fun getItemCount(): Int = if (transactions.isNullOrEmpty()) 0 else transactions.size
 
+    var onItemClick: ((Int) -> Unit)? = null
+    var onItemLongClick: ((Int) -> Unit)? = null
+
     inner class TransactionViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
-        private val houseImg = itemView.findViewById<ImageView>(R.id.transactionHouseImg)
+        private val houseImg = itemView.findViewById<CircleImageView>(R.id.transactionHouseImg)
         private val addr = itemView.findViewById<TextView>(R.id.transactionLstAddress)
         private val status = itemView.findViewById<TextView>(R.id.transactionLstStatus)
-        private val button = itemView.findViewById<TextView>(R.id.transactionBtn)
         private val clientN = itemView.findViewById<TextView>(R.id.clientName)
         private val waiting = itemView.findViewById<TextView>(R.id.waiting)
 
@@ -44,7 +47,6 @@ class TransactionsAdapter(private val UID: String?, private val transactions: Mu
                 }
                 status.setText(this?.status)
                 if (this?.status == "canceled" || this?.status == "finished") {
-                    button.isVisible = false
                 } else if (this?.status == "waiting") {
                     clientN.isVisible = false
                     addr.isVisible = false
@@ -53,7 +55,6 @@ class TransactionsAdapter(private val UID: String?, private val transactions: Mu
                     clientN.setText(this?.clientName)
                     addr.setText(this?.house?.address)
                 }
-                button.setText("cancel")
             }
         }
     }

@@ -20,6 +20,7 @@ import com.example.houseclean.model.User
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
+import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.database.ValueEventListener
 import com.google.firebase.storage.FirebaseStorage
 
@@ -33,6 +34,7 @@ class PerfilFragment : Fragment(R.layout.fragment_perfil) {
     private var dbUser: User? = null
     private val storage = FirebaseStorage.getInstance().reference
     private lateinit var mainActivity: MainActivity
+    private val database = FirebaseDatabase.getInstance("https://housecleanaveiro-default-rtdb.europe-west1.firebasedatabase.app/")
     @RequiresApi(Build.VERSION_CODES.N)
     private val requestPermission = registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { permissions ->
         granted = permissions[android.Manifest.permission.CAMERA]!! &&
@@ -172,7 +174,7 @@ class PerfilFragment : Fragment(R.layout.fragment_perfil) {
     }
 
     fun updateDbUser() {
-        mainActivity.database.getReference("Users").child(user?.uid.toString())
+        database.getReference("Users").child(user?.uid.toString())
             .addValueEventListener(object: ValueEventListener {
                 override fun onDataChange(snapshot: DataSnapshot) {
                     dbUser = snapshot.getValue(User::class.java)

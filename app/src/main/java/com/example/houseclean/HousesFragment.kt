@@ -42,15 +42,16 @@ class HousesFragment : Fragment(R.layout.fragment_houses) {
     ): View? {
         _binding = FragmentHousesBinding.inflate(inflater, container, false)
         mainActivity = activity as MainActivity
+
+        updateDbUser()
+        adapter = HousesAdapter(dbUser?.UID, dbUser?.houses)
+
         return binding.root
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        updateDbUser()
-
-        adapter = HousesAdapter(dbUser?.UID, dbUser?.houses)
         binding.houseLst.adapter = adapter
         binding.houseLst.layoutManager = LinearLayoutManager(activity)
 
@@ -75,9 +76,6 @@ class HousesFragment : Fragment(R.layout.fragment_houses) {
             dialog.dismiss()
         }
 
-        adapter.onItemClick = {
-            openHouseDetails(it)
-        }
         adapter.onItemLongClick = {
             selectedHouse = dbUser?.houses?.get(it)!!
             dialog.show()
@@ -85,22 +83,25 @@ class HousesFragment : Fragment(R.layout.fragment_houses) {
         }
     }
 
-    private fun openHouseDetails(pos: Int) {
-
-    }
     private fun addTransaction() {
+        var cnt = 0
+        database.getReference("Transactions").addValueEventListener(object : ValueEventListener{
+            override fun onDataChange(snapshot: DataSnapshot) {
+                cnt = snapshot.childrenCount.toInt()
+            }
+            override fun onCancelled(error: DatabaseError) {
+                TODO("Not yet implemented")
+            }
+        })
         var transaction = Transaction(
-            transactionID = (if (dbUser?.transactions.isNullOrEmpty()) 0 else dbUser?.transactions?.size),
+            transactionID = cnt,
             clientID = dbUser?.UID,
             clientName = dbUser?.name,
             house = selectedHouse,
             status = "waiting"
         )
-        if (dbUser?.transactions.isNullOrEmpty()) dbUser?.transactions = arrayListOf(transaction)
-        else dbUser?.transactions?.add(transaction)
-
-        database.getReference("Users").child(dbUser?.UID.toString())
-            .setValue(dbUser).addOnSuccessListener{
+        database.getReference("Transactions").child(transaction.transactionID.toString()).setValue(transaction)
+            .addOnSuccessListener{
                 mainActivity.not()
                 Toast.makeText(activity, "Waiting for cleaners!", Toast.LENGTH_SHORT).show()
             }.addOnFailureListener{
@@ -108,7 +109,7 @@ class HousesFragment : Fragment(R.layout.fragment_houses) {
             }
     }
 
-    fun updateDbUser() {
+    private fun updateDbUser() {
         database.getReference("Users").child(user?.uid.toString())
             .addValueEventListener(object: ValueEventListener {
                 override fun onDataChange(snapshot: DataSnapshot) {

@@ -3,14 +3,14 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_marginTop="8dp"
-    android:layout_marginBottom="4dp"
     android:layout_marginStart="8dp"
-    android:orientation="vertical"
+    android:layout_marginTop="8dp"
     android:layout_marginEnd="8dp"
+    android:layout_marginBottom="4dp"
+    android:orientation="vertical"
     tools:showIn="@layout/fragment_inbox">
 
-    <ImageView
+    <de.hdodenhof.circleimageview.CircleImageView
         android:id="@+id/transactionHouseImg"
         android:layout_width="48dp"
         android:layout_height="48dp"
@@ -22,8 +22,8 @@
         android:layout_height="wrap_content"
         android:layout_alignTop="@+id/transactionHouseImg"
         android:layout_marginStart="16dp"
-        android:layout_toEndOf="@+id/transactionHouseImg"
         android:layout_toStartOf="@+id/transactionLstStatus"
+        android:layout_toEndOf="@+id/transactionHouseImg"
         android:ellipsize="end"
         android:lines="1"
         android:textColor="@color/darkGray"
@@ -37,8 +37,8 @@
         android:layout_below="@+id/clientName"
         android:layout_alignBottom="@+id/transactionHouseImg"
         android:layout_marginStart="16dp"
+        android:layout_alignParentEnd="true"
         android:layout_toEndOf="@+id/transactionHouseImg"
-        android:layout_toStartOf="@+id/transactionBtn"
         android:ellipsize="end"
         android:lines="1"
         android:textColor="@color/darkGray"
@@ -48,8 +48,8 @@
         android:id="@+id/waiting"
         android:layout_width="wrap_content"
         android:layout_height="match_parent"
+        android:layout_alignParentEnd="true"
         android:layout_centerInParent="true"
-        android:layout_toStartOf="@+id/transactionBtn"
         android:layout_toEndOf="@+id/transactionHouseImg"
         android:gravity="center_horizontal|center_vertical"
         android:text="waiting"
@@ -71,14 +71,4 @@
         android:textColor="@color/darkGray"
         android:textSize="16sp"
         android:textStyle="bold" />
-
-    <Button
-        android:id="@+id/transactionBtn"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_below="@+id/transactionLstStatus"
-        android:layout_alignParentEnd="true"
-        android:layout_marginStart="8dp"
-        android:gravity="end"
-        android:textSize="15sp" />
 </RelativeLayout>

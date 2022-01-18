@@ -1,13 +1,17 @@
 package com.example.houseclean
 
+import android.app.AlertDialog
 import android.app.ProgressDialog
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.os.Environment
 import android.util.Log
+import android.view.View
 import androidx.appcompat.app.AppCompatDelegate
 import com.example.houseclean.databinding.ActivityMainBinding
+import com.example.houseclean.model.Transaction
 import com.example.houseclean.model.User
+import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
@@ -27,6 +31,7 @@ class MainActivity : AppCompatActivity() {
     private val inboxFragment = InboxFragment()
     private val housesFragment = HousesFragment()
     private val perfilFragment = PerfilFragment()
+    private lateinit var dialog: AlertDialog
     lateinit var dbUser: User
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -39,6 +44,19 @@ class MainActivity : AppCompatActivity() {
 
         initDbValues()
         setUpTapBar()
+        checkTransactions()
+
+        val builder = AlertDialog.Builder(this)
+        val view = View.inflate(this, R.layout.apply_house_dialog, null)
+        dialog = builder.setView(view).setCancelable(false).create()
+        val btn1 = view.findViewById<FloatingActionButton>(R.id.acceptBtn)
+        val btn2 = view.findViewById<FloatingActionButton>(R.id.cancelBtn)
+        btn1.setOnClickListener {
+            dialog.dismiss()
+        }
+        btn2.setOnClickListener {
+            dialog.dismiss()
+        }
 
         binding.bottomNavBar.setItemSelected(R.id.nav_inbox)
         supportFragmentManager.beginTransaction().apply {
@@ -79,22 +97,30 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    private fun checkTransactions() {
+        database.getReference("transactions").addValueEventListener(object : ValueEventListener {
+            override fun onDataChange(snapshot: DataSnapshot) {
+                snapshot.children.forEach {
+                   if (it.child("clientID").getValue(String::class.java).equals(user?.uid.toString())
+                       && it.child("status").getValue(String::class.java).equals("applying")) {
+                       dialog.show()
+                   }
+                }
+            }
+            override fun onCancelled(error: DatabaseError) {
+                TODO("Not yet implemented")
+            }
+        })
+    }
+
     private fun initDbValues() {
         database.getReference("Users").child(user?.uid.toString())
             .addValueEventListener(object: ValueEventListener {
                 override fun onDataChange(snapshot: DataSnapshot) {
-                    Log.d(TAG, "\n \n \n \ndata snapshot: " + snapshot.toString() + "\n \n \n \n")
                     val tmpUser = snapshot.getValue(User::class.java)
-                    if (tmpUser == null) dbUser = User()
-                    else dbUser = tmpUser
-                    Log.d(TAG, "#########################################################################################################")
-                    if(this@MainActivity::dbUser.isInitialized) Log.d(TAG, "\n \n \n data snapshot: INITIALIZED"+"\n \n \n")
-                    else Log.d(TAG, "\n \n \n data snapshot: INITIALIZED"+"\n \n \n")
+                    dbUser = if (tmpUser == null) User() else tmpUser
                 }
-
                 override fun onCancelled(error: DatabaseError) {
-                    Log.d(TAG, "#########################################################################################################")
-                    Log.d(TAG, "\n\ndata snapshot: " + error.toString() + "\n\n")
                 }
             })
     }

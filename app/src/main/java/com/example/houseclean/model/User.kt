@@ -8,8 +8,5 @@ data class User(
     var name: String? = null,
     val email: String? = null,
     var houses: MutableList<House>? = arrayListOf(),
-    var transactions: MutableList<Transaction>? = arrayListOf()
+    //var transactions: MutableList<Transaction>? = arrayListOf()
 ) : Serializable
-{
-
-}
