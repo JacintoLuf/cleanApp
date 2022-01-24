@@ -36,24 +36,22 @@ class InboxFragment : Fragment(R.layout.fragment_inbox) {
         savedInstanceState: Bundle?
     ): View? {
         _binding = FragmentInboxBinding.inflate(inflater, container, false)
-
-        transactions = checkTransactions()
-        binding.noTransactionsTxt.isVisible = transactions.isNullOrEmpty()
-        adapter = TransactionsAdapter(dbUser?.UID, transactions)
-
         return binding.root
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
+        updateDbUser()
+        transactions = checkTransactions()
+        adapter = TransactionsAdapter(dbUser?.UID, transactions)
         binding.inboxLst.adapter = adapter
         binding.inboxLst.layoutManager = LinearLayoutManager(activity)
 
         val builder = AlertDialog.Builder(activity)
         val view = View.inflate(activity, R.layout.cancel_trans_dialog, null)
         dialog = builder.setView(view).create()
-        val btn = view.findViewById<FloatingActionButton>(R.id.cleanHouseBtn)
+        val btn = view.findViewById<FloatingActionButton>(R.id.cancelTransBtn)
         btn.setOnClickListener {
             cancelTrans()
             dialog.dismiss()
@@ -81,12 +79,27 @@ class InboxFragment : Fragment(R.layout.fragment_inbox) {
         database.getReference("Transactions").addValueEventListener(object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
                 snapshot.children.forEach {
-                    if (it.child("clientID").getValue(String::class.java).equals(user?.uid.toString()))
-                        tmpTrans.add(it.getValue(Transaction::class.java)!!)
+                    if (it.child("clientID").getValue(String::class.java).equals(user?.uid.toString())) {
+                        val tr = it.getValue(Transaction::class.java)
+                        tmpTrans.add(tr!!)
+                    }
+                    binding.noTransactionsTxt.isVisible = transactions.isNullOrEmpty()
+                    adapter = TransactionsAdapter(dbUser?.UID, transactions)
+                    binding.inboxLst.adapter = adapter
                 }
             }
             override fun onCancelled(error: DatabaseError) {}
         })
         return tmpTrans
+    }
+
+    fun updateDbUser() {
+        database.getReference("Users").child(user?.uid.toString())
+            .addValueEventListener(object: ValueEventListener {
+                override fun onDataChange(snapshot: DataSnapshot) {
+                    dbUser = snapshot.getValue(User::class.java)
+                }
+                override fun onCancelled(error: DatabaseError) {}
+            })
     }
 }

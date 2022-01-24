@@ -3,7 +3,6 @@ package com.example.houseclean.adapter
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.ImageView
 import android.widget.TextView
 import androidx.core.view.isVisible
 import androidx.recyclerview.widget.RecyclerView
@@ -26,7 +25,6 @@ class TransactionsAdapter(private val UID: String?, private val transactions: Mu
 
     override fun getItemCount(): Int = if (transactions.isNullOrEmpty()) 0 else transactions.size
 
-    var onItemClick: ((Int) -> Unit)? = null
     var onItemLongClick: ((Int) -> Unit)? = null
 
     inner class TransactionViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
@@ -35,6 +33,13 @@ class TransactionsAdapter(private val UID: String?, private val transactions: Mu
         private val status = itemView.findViewById<TextView>(R.id.transactionLstStatus)
         private val clientN = itemView.findViewById<TextView>(R.id.clientName)
         private val waiting = itemView.findViewById<TextView>(R.id.waiting)
+
+        init {
+            itemView.setOnLongClickListener {
+                onItemLongClick?.invoke(absoluteAdapterPosition)
+                return@setOnLongClickListener true
+            }
+        }
 
         fun bind(pos: Int) {
             with(transactions?.get(pos)) {
@@ -45,15 +50,15 @@ class TransactionsAdapter(private val UID: String?, private val transactions: Mu
                 }.addOnFailureListener{
                     houseImg.setImageResource(R.drawable.ic_home)
                 }
-                status.setText(this?.status)
+                status.text = this?.status
                 if (this?.status == "canceled" || this?.status == "finished") {
                 } else if (this?.status == "waiting") {
                     clientN.isVisible = false
                     addr.isVisible = false
                     waiting.isVisible = true
                 } else {
-                    clientN.setText(this?.clientName)
-                    addr.setText(this?.house?.address)
+                    clientN.text = this?.clientName
+                    addr.text = this?.house?.address
                 }
             }
         }

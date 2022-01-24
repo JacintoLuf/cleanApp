@@ -8,7 +8,7 @@
     android:paddingVertical="8dp"
     tools:showIn="@layout/fragment_houses">
 
-    <ImageView
+    <de.hdodenhof.circleimageview.CircleImageView
         android:id="@+id/houseLstImg"
         android:layout_width="56dp"
         android:layout_height="56dp"

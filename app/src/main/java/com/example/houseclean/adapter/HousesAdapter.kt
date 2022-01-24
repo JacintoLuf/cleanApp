@@ -22,24 +22,23 @@ class HousesAdapter(private val UID: String?, private val houses: MutableList<Ho
 
     override fun onBindViewHolder(holder: HousesViewHolder, position: Int) {
         holder.bind(position)
-        holder.itemView.setOnClickListener {
-            onItemClick?.invoke(position)
-        }
-        holder.itemView.setOnLongClickListener {
-            onItemLongClick?.invoke(position)
-            return@setOnLongClickListener true
-        }
     }
 
     override fun getItemCount(): Int = if (houses.isNullOrEmpty()) 0 else houses.size
 
-    var onItemClick: ((Int) -> Unit)? = null
     var onItemLongClick: ((Int) -> Unit)? = null
 
     inner class HousesViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         private val img = itemView.findViewById<CircleImageView>(R.id.houseLstImg)
         private val title = itemView.findViewById<TextView>(R.id.houseLstTitle)
         private val addr = itemView.findViewById<TextView>(R.id.houseLstAddress)
+
+        init {
+            itemView.setOnLongClickListener {
+                onItemLongClick?.invoke(absoluteAdapterPosition)
+                return@setOnLongClickListener true
+            }
+        }
 
         fun bind(pos: Int) {
             with(houses?.get(pos)) {

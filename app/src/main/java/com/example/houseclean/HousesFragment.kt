@@ -22,6 +22,10 @@ import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.database.ValueEventListener
+import com.squareup.okhttp.Dispatcher
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
 
 class HousesFragment : Fragment(R.layout.fragment_houses) {
     private var _binding: FragmentHousesBinding? = null
@@ -42,16 +46,14 @@ class HousesFragment : Fragment(R.layout.fragment_houses) {
     ): View? {
         _binding = FragmentHousesBinding.inflate(inflater, container, false)
         mainActivity = activity as MainActivity
-
-        updateDbUser()
-        adapter = HousesAdapter(dbUser?.UID, dbUser?.houses)
-
         return binding.root
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
+        updateDbUser()
+        adapter = HousesAdapter(dbUser?.UID, dbUser?.houses)
         binding.houseLst.adapter = adapter
         binding.houseLst.layoutManager = LinearLayoutManager(activity)
 
@@ -83,6 +85,10 @@ class HousesFragment : Fragment(R.layout.fragment_houses) {
         }
     }
 
+    private suspend fun pop() {
+
+    }
+
     private fun addTransaction() {
         var cnt = 0
         database.getReference("Transactions").addValueEventListener(object : ValueEventListener{
@@ -102,7 +108,7 @@ class HousesFragment : Fragment(R.layout.fragment_houses) {
         )
         database.getReference("Transactions").child(transaction.transactionID.toString()).setValue(transaction)
             .addOnSuccessListener{
-                mainActivity.not()
+                mainActivity.not(1)
                 Toast.makeText(activity, "Waiting for cleaners!", Toast.LENGTH_SHORT).show()
             }.addOnFailureListener{
                 Toast.makeText(activity, "Error", Toast.LENGTH_SHORT).show()

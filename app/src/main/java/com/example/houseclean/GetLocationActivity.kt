@@ -98,8 +98,6 @@ class GetLocationActivity : AppCompatActivity(), OnMapReadyCallback {
 
     private fun drawMarker(latLng: LatLng) {
         val markerOptions = MarkerOptions().position(latLng).title("My house").snippet(getAddress(latLng.latitude, latLng.longitude)).draggable(true)
-        //val cameraPosition = CameraPosition.Builder().target(latLng).zoom(14f).build()
-        //mMap.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition))
         mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(latLng, 14f))
         currentMarker = mMap.addMarker(markerOptions)
         currentMarker?.showInfoWindow()

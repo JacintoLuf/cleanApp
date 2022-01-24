@@ -158,7 +158,6 @@ class PerfilFragment : Fragment(R.layout.fragment_perfil) {
         storage.child(user?.uid.toString().plus("/profilePic")).downloadUrl.addOnSuccessListener {
             if (it != null) {
                 Glide.with(this).load(it).into(binding.perfilImage)
-                //binding.perfilImage.setImageURI(it)
             }
         }.addOnFailureListener{
             Toast.makeText(activity, "Couldn't load profile image!", Toast.LENGTH_SHORT).show()

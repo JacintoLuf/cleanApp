@@ -39,10 +39,6 @@ class AddHouseActivity : AppCompatActivity() {
     private var granted = false
     private lateinit var locationRequest: LocationRequest
     private lateinit var builder: LocationSettingsRequest.Builder
-    /*private val requestPermission = registerForActivityResult(ActivityResultContracts.RequestPermission()) {
-        granted = granted && it
-        if (!granted) Toast.makeText(this, "Permissions needed!", Toast.LENGTH_SHORT).show()
-    }*/
     @RequiresApi(Build.VERSION_CODES.N)
     private val requestPermission = registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { permissions ->
         granted = permissions.get(android.Manifest.permission.CAMERA)!! &&
@@ -99,9 +95,9 @@ class AddHouseActivity : AppCompatActivity() {
 
         binding.houseLocation.setOnClickListener {
             locationRequest = LocationRequest.create()
-            locationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY)
-            locationRequest.setInterval(5000L)
-            locationRequest.setFastestInterval(2000L)
+            locationRequest.priority = LocationRequest.PRIORITY_HIGH_ACCURACY
+            locationRequest.interval = 5000L
+            locationRequest.fastestInterval = 2000L
             builder = LocationSettingsRequest.Builder().addLocationRequest(locationRequest)
                 .setAlwaysShow(true)
             LocationServices.getSettingsClient(applicationContext)
