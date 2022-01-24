@@ -57,7 +57,7 @@ class MainActivity : AppCompatActivity() {
         initDbValues()
         setUpTapBar()
         checkTransactions()
-        if (!granted) getPermissions()
+        getPermissions()
 
         val builder = AlertDialog.Builder(this)
         val view = View.inflate(this, R.layout.apply_house_dialog, null)

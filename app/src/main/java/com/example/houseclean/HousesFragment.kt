@@ -85,34 +85,27 @@ class HousesFragment : Fragment(R.layout.fragment_houses) {
         }
     }
 
-    private suspend fun pop() {
-
-    }
-
     private fun addTransaction() {
-        var cnt = 0
-        database.getReference("Transactions").addValueEventListener(object : ValueEventListener{
+        var cnt: Int
+        database.getReference("Transactions").addListenerForSingleValueEvent(object : ValueEventListener{
             override fun onDataChange(snapshot: DataSnapshot) {
-                cnt = snapshot.childrenCount.toInt()
+                var transaction = Transaction(
+                    transactionID = snapshot.childrenCount.toInt(),
+                    clientID = dbUser?.UID,
+                    clientName = dbUser?.name,
+                    house = selectedHouse,
+                    status = "waiting"
+                )
+                database.getReference("Transactions").child(transaction.transactionID.toString()).setValue(transaction)
+                    .addOnSuccessListener{
+                        mainActivity.not(1)
+                        Toast.makeText(activity, "Waiting for cleaners!", Toast.LENGTH_SHORT).show()
+                    }.addOnFailureListener{
+                        Toast.makeText(activity, "Error", Toast.LENGTH_SHORT).show()
+                    }
             }
-            override fun onCancelled(error: DatabaseError) {
-                TODO("Not yet implemented")
-            }
+            override fun onCancelled(error: DatabaseError) {}
         })
-        var transaction = Transaction(
-            transactionID = cnt,
-            clientID = dbUser?.UID,
-            clientName = dbUser?.name,
-            house = selectedHouse,
-            status = "waiting"
-        )
-        database.getReference("Transactions").child(transaction.transactionID.toString()).setValue(transaction)
-            .addOnSuccessListener{
-                mainActivity.not(1)
-                Toast.makeText(activity, "Waiting for cleaners!", Toast.LENGTH_SHORT).show()
-            }.addOnFailureListener{
-                Toast.makeText(activity, "Error", Toast.LENGTH_SHORT).show()
-            }
     }
 
     private fun updateDbUser() {
