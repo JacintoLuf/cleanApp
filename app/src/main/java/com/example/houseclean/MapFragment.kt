@@ -29,9 +29,8 @@ class MapFragment : Fragment(R.layout.fragment_map), OnMapReadyCallback {
     private lateinit var mMap: GoogleMap
     private var currentMarker: Marker? = null
     private lateinit var transaction: Transaction
-    private var granted = false
-    var mMapView: MapView? = null
-    private var googleMap: GoogleMap? = null
+    private lateinit var mMapView: MapView
+    private lateinit var googleMap: GoogleMap
 
     @RequiresApi(Build.VERSION_CODES.N)
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?,
@@ -39,15 +38,15 @@ class MapFragment : Fragment(R.layout.fragment_map), OnMapReadyCallback {
         // Inflate the layout for this fragment
         var rootView = inflater.inflate(R.layout.fragment_map, container, false)
         mMapView = rootView.findViewById<View>(R.id.google_map) as MapView
-        mMapView!!.onCreate(savedInstanceState)
-        mMapView!!.onResume() // needed to get the map to display immediately
+        mMapView.onCreate(savedInstanceState)
+        mMapView.onResume()
 
         try {
             MapsInitializer.initialize(activity!!.applicationContext)
         } catch (e: Exception) {
             e.printStackTrace()
         }
-        mMapView!!.getMapAsync { mMap ->
+        mMapView.getMapAsync { mMap ->
             googleMap = mMap
 
             // For showing a move to my location button
@@ -61,7 +60,7 @@ class MapFragment : Fragment(R.layout.fragment_map), OnMapReadyCallback {
             ) {
                 Toast.makeText(activity, "Location permission needed!", Toast.LENGTH_SHORT).show()
             }
-            googleMap!!.isMyLocationEnabled = true
+            googleMap.isMyLocationEnabled = true
             // For dropping a marker at a point on the Map
             //val aveiro = LatLng(40.64427, -8.64554)
 

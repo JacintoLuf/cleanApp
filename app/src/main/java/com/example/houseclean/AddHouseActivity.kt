@@ -41,9 +41,9 @@ class AddHouseActivity : AppCompatActivity() {
     private lateinit var builder: LocationSettingsRequest.Builder
     @RequiresApi(Build.VERSION_CODES.N)
     private val requestPermission = registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { permissions ->
-        granted = permissions.get(android.Manifest.permission.CAMERA)!! &&
-                permissions.get(android.Manifest.permission.READ_EXTERNAL_STORAGE)!! &&
-                permissions.get(android.Manifest.permission.WRITE_EXTERNAL_STORAGE)!!
+        granted = permissions[android.Manifest.permission.CAMERA]!! &&
+                permissions[android.Manifest.permission.READ_EXTERNAL_STORAGE]!! &&
+                permissions[android.Manifest.permission.WRITE_EXTERNAL_STORAGE]!!
         if (!granted) Toast.makeText(this, "Camera/Gallery permission needed!", Toast.LENGTH_SHORT).show()
     }
     private lateinit var tmpImageUri: Uri

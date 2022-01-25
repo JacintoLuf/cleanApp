@@ -2,27 +2,38 @@ package com.example.houseclean
 
 import android.Manifest
 import android.app.AlertDialog
+import android.app.Notification
+import android.app.PendingIntent
+import android.content.Intent
+import android.graphics.BitmapFactory
 import android.os.Build
 import android.os.Bundle
 import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Button
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.RequiresApi
+import androidx.core.app.NotificationCompat
+import androidx.core.app.NotificationManagerCompat
+import androidx.core.content.ContextCompat
 import androidx.core.view.isVisible
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.example.houseclean.adapter.HousesAdapter
 import com.example.houseclean.adapter.TransactionsAdapter
 import com.example.houseclean.databinding.FragmentInboxBinding
 import com.example.houseclean.model.Transaction
 import com.example.houseclean.model.User
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.database.DataSnapshot
-import com.google.firebase.database.DatabaseError
-import com.google.firebase.database.FirebaseDatabase
-import com.google.firebase.database.ValueEventListener
+import com.google.firebase.database.*
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
+import kotlinx.coroutines.withContext
 
 class InboxFragment : Fragment(R.layout.fragment_inbox) {
     private var _binding: FragmentInboxBinding? = null
@@ -46,11 +57,32 @@ class InboxFragment : Fragment(R.layout.fragment_inbox) {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        updateDbUser()
-        transactions = checkTransactions()
-        adapter = TransactionsAdapter(dbUser?.UID, transactions)
-        binding.inboxLst.adapter = adapter
-        binding.inboxLst.layoutManager = LinearLayoutManager(activity)
+        GlobalScope.launch(Dispatchers.IO){
+            val ref1 = database.getReference("Users").child(user?.uid.toString())
+            val ref2 = database.getReference("Transactions")
+            withContext(Dispatchers.Main) {
+                dbUser = ref1.get().await().getValue(User::class.java)
+                transactions.clear()
+                ref2.get().await().children.forEach {
+                    if (it.child("clientID").getValue(String::class.java).equals(user?.uid.toString())) {
+                        val tr = it.getValue(Transaction::class.java)
+                        transactions.add(tr!!)
+                    }
+                }.apply {
+                    binding.noTransactionsTxt.isVisible = transactions.isNullOrEmpty()
+                    adapter = TransactionsAdapter(dbUser?.UID, transactions)
+                    binding.inboxLst.adapter = adapter
+                    binding.inboxLst.layoutManager = LinearLayoutManager(activity)
+                    adapter.onItemLongClick = {
+                        selectedTrans = transactions[it]
+                        if (selectedTrans.completed != true && selectedTrans.status != "canceled") {
+                            dialog.show()
+                            dialog.window?.setBackgroundDrawableResource(android.R.color.transparent)
+                        }
+                    }
+                }
+            }
+        }
 
         val builder = AlertDialog.Builder(activity)
         val view = View.inflate(activity, R.layout.cancel_trans_dialog, null)
@@ -59,14 +91,6 @@ class InboxFragment : Fragment(R.layout.fragment_inbox) {
         btn.setOnClickListener {
             cancelTrans()
             dialog.dismiss()
-        }
-
-        adapter.onItemLongClick = {
-            selectedTrans = transactions[it]
-            if (selectedTrans.completed != true && selectedTrans.status != "canceled") {
-                dialog.show()
-                dialog.window?.setBackgroundDrawableResource(android.R.color.transparent)
-            }
         }
     }
 
@@ -95,15 +119,5 @@ class InboxFragment : Fragment(R.layout.fragment_inbox) {
             override fun onCancelled(error: DatabaseError) {}
         })
         return tmpTrans
-    }
-
-    fun updateDbUser() {
-        database.getReference("Users").child(user?.uid.toString())
-            .addValueEventListener(object: ValueEventListener {
-                override fun onDataChange(snapshot: DataSnapshot) {
-                    dbUser = snapshot.getValue(User::class.java)
-                }
-                override fun onCancelled(error: DatabaseError) {}
-            })
     }
 }

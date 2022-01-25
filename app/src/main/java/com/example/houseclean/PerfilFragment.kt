@@ -23,6 +23,11 @@ import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.database.ValueEventListener
 import com.google.firebase.storage.FirebaseStorage
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
+import kotlinx.coroutines.withContext
 
 
 class PerfilFragment : Fragment(R.layout.fragment_perfil) {
@@ -40,21 +45,7 @@ class PerfilFragment : Fragment(R.layout.fragment_perfil) {
         granted = permissions[android.Manifest.permission.CAMERA]!! &&
                 permissions[android.Manifest.permission.READ_EXTERNAL_STORAGE]!! &&
                 permissions[android.Manifest.permission.WRITE_EXTERNAL_STORAGE]!!
-        //if (!granted) Toast.makeText(activity, "Camera permission needed!", Toast.LENGTH_SHORT).show()
-        when {
-            permissions.getOrDefault(android.Manifest.permission.CAMERA, false) -> {
-                Toast.makeText(activity, "Camera permission needed!", Toast.LENGTH_SHORT).show()
-            }
-            permissions.getOrDefault(android.Manifest.permission.READ_EXTERNAL_STORAGE, false) -> {
-                Toast.makeText(activity, "Storage permission needed!", Toast.LENGTH_SHORT).show()
-            }
-            permissions.getOrDefault(android.Manifest.permission.WRITE_EXTERNAL_STORAGE, false) -> {
-                Toast.makeText(activity, "Storage permission needed!", Toast.LENGTH_SHORT).show()
-            }
-            else -> {
-                Toast.makeText(activity, "Camera permission needed!", Toast.LENGTH_SHORT).show()
-            }
-        }
+        if (!granted) Toast.makeText(activity, "Camera permission needed!", Toast.LENGTH_SHORT).show()
     }
     private lateinit var tmpImageUri: Uri
     private var tmpImageFilePath = ""
@@ -84,7 +75,14 @@ class PerfilFragment : Fragment(R.layout.fragment_perfil) {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        updateDbUser()
+        GlobalScope.launch(Dispatchers.IO){
+            val ref = database.getReference("Users").child(user?.uid.toString())
+            withContext(Dispatchers.Main) {
+                dbUser = ref.get().await().getValue(User::class.java)
+                binding.perfilName.text = dbUser?.name
+                binding.perfilEmail.text = dbUser?.email
+            }
+        }
         updateImage()
 
         binding.perfilImage.setOnClickListener{
@@ -170,18 +168,5 @@ class PerfilFragment : Fragment(R.layout.fragment_perfil) {
         val intent = Intent(activity?.applicationContext, LoginActivity::class.java)
         intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
         startActivity(intent)
-    }
-
-    fun updateDbUser() {
-        database.getReference("Users").child(user?.uid.toString())
-            .addValueEventListener(object: ValueEventListener {
-                override fun onDataChange(snapshot: DataSnapshot) {
-                    dbUser = snapshot.getValue(User::class.java)
-                    binding.perfilName.text = dbUser?.name
-                    binding.perfilEmail.text = dbUser?.email
-                }
-                override fun onCancelled(error: DatabaseError) {
-                }
-            })
     }
 }

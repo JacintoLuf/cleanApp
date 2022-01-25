@@ -26,6 +26,8 @@ import com.squareup.okhttp.Dispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
+import kotlinx.coroutines.withContext
 
 class HousesFragment : Fragment(R.layout.fragment_houses) {
     private var _binding: FragmentHousesBinding? = null
@@ -52,10 +54,21 @@ class HousesFragment : Fragment(R.layout.fragment_houses) {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        updateDbUser()
-        adapter = HousesAdapter(dbUser?.UID, dbUser?.houses)
-        binding.houseLst.adapter = adapter
-        binding.houseLst.layoutManager = LinearLayoutManager(activity)
+        GlobalScope.launch(Dispatchers.IO){
+            val ref = database.getReference("Users").child(user?.uid.toString())
+            withContext(Dispatchers.Main) {
+                dbUser = ref.get().await().getValue(User::class.java)
+                binding.noHousesTxt.isVisible = dbUser?.houses.isNullOrEmpty()
+                adapter = HousesAdapter(dbUser?.UID, dbUser?.houses)
+                binding.houseLst.adapter = adapter
+                binding.houseLst.layoutManager = LinearLayoutManager(activity)
+                adapter.onItemLongClick = {
+                    selectedHouse = dbUser?.houses?.get(it)!!
+                    dialog.show()
+                    dialog.window?.setBackgroundDrawableResource(android.R.color.transparent)
+                }
+            }
+        }
 
         addHouse = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
             if (it.resultCode == Activity.RESULT_OK) Toast.makeText(activity, "Added!", Toast.LENGTH_SHORT).show()
@@ -78,15 +91,10 @@ class HousesFragment : Fragment(R.layout.fragment_houses) {
             dialog.dismiss()
         }
 
-        adapter.onItemLongClick = {
-            selectedHouse = dbUser?.houses?.get(it)!!
-            dialog.show()
-            dialog.window?.setBackgroundDrawableResource(android.R.color.transparent)
-        }
+
     }
 
     private fun addTransaction() {
-        var cnt: Int
         database.getReference("Transactions").addListenerForSingleValueEvent(object : ValueEventListener{
             override fun onDataChange(snapshot: DataSnapshot) {
                 var transaction = Transaction(
@@ -106,17 +114,5 @@ class HousesFragment : Fragment(R.layout.fragment_houses) {
             }
             override fun onCancelled(error: DatabaseError) {}
         })
-    }
-
-    private fun updateDbUser() {
-        database.getReference("Users").child(user?.uid.toString())
-            .addValueEventListener(object: ValueEventListener {
-                override fun onDataChange(snapshot: DataSnapshot) {
-                    dbUser = snapshot.getValue(User::class.java)
-                    binding.noHousesTxt.isVisible = dbUser?.houses.isNullOrEmpty()
-                }
-                override fun onCancelled(error: DatabaseError) {
-                }
-            })
     }
 }
